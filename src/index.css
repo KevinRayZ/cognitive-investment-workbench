@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-page: #f4f6fb;
+  --surface: #ffffff;
+  --border: #e8ebf0;
+  --ink-900: #0f1729;
+  --ink-700: #33425a;
+  --ink-500: #64738c;
+  --ink-400: #94a3b8;
+  --primary: #2f54eb;
+  --primary-soft: #eeeffa;
+  --ai: #0ea5a4;
+  --ai-soft: #e6f7f6;
+  --up: #e5484d;
+  --down: #15803d;
+  --warn: #f5a524;
+  --warn-soft: #fff6e5;
+  --dark: #0f1729;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-page);
+  color: var(--ink-700);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospaced, tabular numbers for prices / IDs / KPIs (Roboto Mono) */
+.mono {
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Thin scrollbar for inner scroll areas */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 41, 0.18);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

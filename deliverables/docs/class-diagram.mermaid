@@ -1,0 +1,187 @@
+classDiagram
+    class L1InvestmentPhilosophy {
+        +string id
+        +enum category
+        +string title
+        +string rule
+        +string boundary
+        +string reason
+        +string sourceIsId
+        +boolean isConstitution
+    }
+
+    class ISPrincipleCard {
+        +string id
+        +string title
+        +string module
+        +enum category
+        +number confidence
+        +string validationPlan
+        +enum status
+        +string statement
+        +string source
+        +string scope
+        +string[] relatedErrIds
+        +boolean isConstitution
+        +string createdAt
+        +string updatedAt
+        +boolean isSample
+    }
+
+    class L2InvestmentMethod {
+        +string id
+        +string name
+        +string scenario
+        +string assumptions
+        +string[] steps
+        +string limitations
+        +enum status
+        +string[] relatedIsIds
+        +string version
+        +boolean isSample
+    }
+
+    class L3TargetResearch {
+        +string id
+        +string name
+        +string code
+        +string currency
+        +string businessModel
+        +string moat
+        +object keyFinancials
+        +string[] riskPoints
+        +object valuationRange
+        +string[] trackingPoints
+        +string[] relatedIsIds
+        +string[] relatedErrIds
+        +enum stage
+        +boolean isSample
+    }
+
+    class L4TradeLog {
+        +string id
+        +string date
+        +string targetId
+        +string targetName
+        +enum direction
+        +number quantity
+        +number price
+        +string currency
+        +number amount
+        +string memoId
+        +enum status
+        +boolean isOutOfBoundary
+        +object decisionContext
+        +boolean isSample
+    }
+
+    class L5ReviewAndError {
+        +string id
+        +enum type
+        +string errId
+        +enum category
+        +string title
+        +string description
+        +string[] relatedIsIds
+        +string[] relatedTradeIds
+        +object[] reviewRecords
+        +enum status
+        +boolean isSample
+    }
+
+    class L6Observation {
+        +string id
+        +string title
+        +string source
+        +enum sourceType
+        +string summary
+        +enum status
+        +string[] relatedTargetIds
+        +string[] relatedMethodIds
+        +string[] relatedErrIds
+        +string createdAt
+        +boolean isSample
+    }
+
+    class MaterialCardIndex {
+        +string id
+        +string materialTitle
+        +string materialUrl
+        +string[] isIds
+        +string[] methodIds
+        +string[] targetIds
+        +string createdAt
+    }
+
+    class SystemChangeLog {
+        +string id
+        +enum type
+        +string description
+        +string version
+        +string createdAt
+    }
+
+    class InvestmentMemo {
+        +string id
+        +string date
+        +string targetId
+        +string targetName
+        +enum direction
+        +string logic
+        +string expectedReturn
+        +string timeFrame
+        +string catalyst
+        +string risk
+        +string redTeamChallenge
+        +string exitConditions
+        +number confidence
+        +string[] isIds
+        +string[] errIds
+        +enum status
+        +boolean[] gateChecks
+        +object[] decisionHistory
+        +boolean isSample
+    }
+
+    class AppStore {
+        +object state
+        +loadAll()
+        +saveAll()
+        +create(entityType, payload)
+        +update(entityType, id, payload)
+        +remove(entityType, id)
+        +clearSamples()
+        +getTodolist()
+        +getKpis()
+    }
+
+    class IdGenerator {
+        +nextIsId(year)
+        +nextErrId(year)
+        +nextMethodId(year)
+        +nextMemoId(year)
+    }
+
+    class GateValidator {
+        +checkInfoComplete(memo)
+        +checkRiskIdentified(memo)
+        +checkRedTeam(memo)
+        +checkReferences(memo)
+        +checkConfidence(memo)
+        +validateAll(memo)
+    }
+
+    ISPrincipleCard "1" --> "0..*" L1InvestmentPhilosophy : constitutional view
+    L2InvestmentMethod "1" --> "0..*" ISPrincipleCard : references
+    L3TargetResearch "1" --> "0..*" ISPrincipleCard : references
+    L3TargetResearch "1" --> "0..*" L5ReviewAndError : references
+    L5ReviewAndError "1" --> "0..*" ISPrincipleCard : references
+    L6Observation "1" --> "0..*" L3TargetResearch : references
+    L6Observation "1" --> "0..*" L2InvestmentMethod : references
+    L6Observation "1" --> "0..*" L5ReviewAndError : references
+    InvestmentMemo "1" --> "1" L3TargetResearch : targets
+    InvestmentMemo "1" --> "0..*" ISPrincipleCard : cites
+    InvestmentMemo "1" --> "0..*" L5ReviewAndError : cites
+    InvestmentMemo "1" --> "0..1" L4TradeLog : triggers
+    AppStore --> IdGenerator : uses
+    AppStore --> GateValidator : uses

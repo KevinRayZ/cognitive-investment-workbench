@@ -1,0 +1,91 @@
+sequenceDiagram
+    actor User
+    participant App
+    participant Router
+    participant Store as AppStore
+    participant DB as localStorage
+    participant Seed
+    participant HomePage
+    participant ModulePage
+
+    %% 流程1：打开首页 → 进入模块 → 增删改 → 回写 localStorage
+    User->>App: 打开应用
+    App->>Store: initialize()
+    Store->>DB: loadAll()
+    DB-->>Store: persisted JSON / null
+    alt 首次使用
+        Store->>Seed: injectSeedData()
+        Seed-->>Store: sample entities
+        Store->>DB: saveAll()
+    end
+    Store-->>App: state ready
+    App->>Router: 渲染路由树
+    Router->>HomePage: 渲染首页
+    HomePage->>Store: getKpis(), getTodolist(), getRecentMemos()
+    Store-->>HomePage: 派生数据
+    HomePage-->>User: 显示全局看板
+
+    User->>HomePage: 点击「交易决策日志」卡片
+    HomePage->>Router: navigate('/layer/4')
+    Router->>ModulePage: render TradeLogL4
+    ModulePage->>Store: list('tradeLog')
+    Store-->>ModulePage: 交易记录列表
+    ModulePage-->>User: 渲染交易表格
+
+    User->>ModulePage: 点击「录入交易」
+    ModulePage->>Store: create('tradeLog', payload)
+    Store->>Store: validate(payload)
+    Store->>DB: saveAll(state)
+    DB-->>Store: ok
+    Store-->>ModulePage: 更新后的列表
+    ModulePage-->>User: 显示新记录
+
+    User->>ModulePage: 删除/编辑记录
+    ModulePage->>Store: update/remove('tradeLog', id, payload)
+    Store->>DB: saveAll(state)
+    Store-->>ModulePage: 更新后的列表
+    ModulePage-->>User: 刷新 UI
+
+    %% 流程2：新建备忘录 → 5步闸门校验 → 引用 IS/ERR → 落库
+    participant MemoPage
+    participant Gate as GateStepper
+    participant Validator
+    participant IdGen as IdGenerator
+
+    User->>MemoPage: 点击「新建备忘录」
+    MemoPage->>IdGen: nextMemoId(2026)
+    IdGen-->>MemoPage: MEMO-2026-NNN
+    MemoPage->>Store: getAvailableIS(), getAvailableERR()
+    Store-->>MemoPage: 原则列表、错误列表
+    MemoPage-->>User: 渲染双栏表单
+
+    User->>MemoPage: 填写七要素、红队挑战、引用
+    MemoPage->>Gate: updateField(field, value)
+    Gate->>Validator: validateAll(memo)
+    Validator->>Validator: 信息完整
+    Validator->>Validator: 风险已识别
+    Validator->>Validator: 红队挑战已记录
+    Validator->>Validator: 引用 IS >= 1
+    Validator->>Validator: 信心 >= 60
+    Validator-->>Gate: gateChecks[5]
+    Gate-->>MemoPage: 更新 Stepper 状态
+    MemoPage-->>User: 未通过项 amber 高亮
+
+    User->>MemoPage: 点击「提交闸门」
+    MemoPage->>Gate: canSubmit()
+    Gate->>Validator: validateAll(memo)
+    Validator-->>Gate: true / false
+
+    alt 全部通过
+        Gate-->>MemoPage: true
+        MemoPage->>Store: create('memo', memo)
+        Store->>IdGen: confirmId('memo', 2026)
+        Store->>Store: updateDerivedIndices()
+        Store->>DB: saveAll(state)
+        DB-->>Store: ok
+        Store-->>MemoPage: success
+        MemoPage-->>User: 跳转备忘录列表
+    else 存在阻塞
+        Gate-->>MemoPage: false + blockedSteps
+        MemoPage-->>User: 聚焦首个失败闸门
+    end

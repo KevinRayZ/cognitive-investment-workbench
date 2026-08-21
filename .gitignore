@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+build/
+.vite/
+*.local
+# Vite dev 运行时临时配置（带绝对路径，不入仓）
+vite.config.js.timestamp-*.mjs
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Workbuddy private memory logs (per-session append-only)
+.workbuddy/memory/2026-*.md
+.workbuddy/memory/YYYY-MM-DD.md
+
+# OS
+*.lnk
