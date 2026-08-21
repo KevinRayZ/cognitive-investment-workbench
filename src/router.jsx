@@ -10,9 +10,10 @@ import TargetL3 from './pages/TargetL3'
 import MethodL2 from './pages/MethodL2'
 import ObservationL6 from './pages/ObservationL6'
 import AiProtocol from './pages/AiProtocol'
+import Chat from './pages/Chat'
 
 /**
- * 路由表（九屏 + 研究列表）。
+ * 路由表（十屏 + 研究列表）。
  * 所有页面经 App 壳层渲染，统一含 TopBar / Sidebar / 免责声明条。
  */
 export const router = createBrowserRouter([
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       { index: true, element: <Home /> },
+      { path: 'chat', element: <Chat /> },
       { path: 'memo', element: <Memo /> },
       { path: 'principle', element: <PrincipleIS /> },
       { path: 'trade', element: <TradeLogL4 /> },

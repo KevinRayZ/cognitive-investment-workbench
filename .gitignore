@@ -29,6 +29,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+server/.env
 
 # Workbuddy private memory logs (per-session append-only)
 .workbuddy/memory/2026-*.md

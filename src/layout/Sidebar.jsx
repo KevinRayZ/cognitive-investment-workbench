@@ -11,6 +11,7 @@ import NoteAdd from '@mui/icons-material/NoteAdd'
 import Home from '@mui/icons-material/Home'
 import AccountBalance from '@mui/icons-material/AccountBalance'
 import SmartToy from '@mui/icons-material/SmartToy'
+import Forum from '@mui/icons-material/Forum'
 
 import tokens from '../theme/tokens'
 
@@ -25,6 +26,7 @@ const LAYERS = [
 ]
 
 const CORE = [
+  { label: 'AI 对话', path: '/chat', icon: Forum },
   { label: '投资备忘录', path: '/memo', icon: NoteAdd },
   { label: '首页看板', path: '/', icon: Home },
 ]
