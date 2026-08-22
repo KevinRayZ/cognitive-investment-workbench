@@ -1,0 +1,12 @@
+# Nixpacks 配置（Railway 构建器）
+# 单服务部署：前端（vite build → dist）+ 后端（express 托管 dist 并暴露 /api）
+# 同一端口、同源，前端用相对路径 /api 调用，免 CORS 配置。
+
+[phases.build]
+cmds = ["npm install", "npm run build"]
+
+[start]
+cmd = "npm start"
+
+[variables]
+NODE_ENV = "production"

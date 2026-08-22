@@ -1,7 +1,7 @@
 {
   "name": "cognitive_investment_workbench",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "description": "人机协同认知成长型个人投资工作台 · v2.0.0（在线化：GitHub 数据层 + DeepSeek 对话大脑 + 双入口数据一致）",
   "scripts": {
@@ -9,6 +9,7 @@
     "dev:server": "node server/index.js",
     "dev:web": "vite",
     "build": "vite build",
+    "start": "node server/index.js",
     "preview": "vite preview"
   },
   "dependencies": {

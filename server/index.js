@@ -6,6 +6,9 @@
  */
 import express from 'express'
 import cors from 'cors'
+import path from 'node:path'
+import fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import {
   readJson,
@@ -18,12 +21,28 @@ import { chatCompletion, lastUserText } from './deepseek.js'
 import { buildExtractMessages, parseExtractJson } from './extract.js'
 import { getKnowledge, buildSystemPrompt } from './knowledge.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT || 8787
 const DATA_COLLECTIONS = ['trades', 'reviews', 'reflections', 'positions', 'conversations']
 
 app.use(cors())
 app.use(express.json({ limit: '2mb' }))
+
+// ---------- 前端静态托管（Railway 等 PaaS 单服务部署：API + 网页同源） ----------
+// 生产构建产物位于 dist/。开发模式下 dist 不存在，此段不生效，仍由 Vite dev 提供页面。
+const DIST_DIR = path.resolve(__dirname, '..', 'dist')
+const serveStatic = fs.existsSync(DIST_DIR)
+if (serveStatic) {
+  app.use(express.static(DIST_DIR))
+  // SPA fallback：非 /api 路由统一返回 index.html（Express 5 兼容写法）
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(DIST_DIR, 'index.html'), (err) => {
+      if (err) next(err)
+    })
+  })
+}
 
 /** 记录一条对话固化流水（conversations.json），无新内容不记录。 */
 async function logConversation(payload) {
