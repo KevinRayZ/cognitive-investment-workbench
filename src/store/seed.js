@@ -807,6 +807,30 @@ export function seedData() {
     }),
   ]
 
+  // ---------- 11. 首页看板状态（市场时钟 / 资产吸引力 / 本月策略） ----------
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const dashboard = {
+    marketClock: {
+      // 默认定位依据：2026-07 PMI 49.2（荣枯线下）、CPI≈1% 低位、内需偏弱、政策预期宽松
+      phase: '衰退',
+      note: '默认研判（可编辑）：2026-07 PMI 49.2 落于荣枯线下，CPI≈1% 低位，内需偏弱、地产调整未止；政策预期宽松（降准降息）。定位为衰退/筑底阶段——债券与黄金相对占优，权益待政策与需求企稳后再提升。请结合最新 PMI/CPI/社融自行核实调整。',
+      updatedAt: todayStr,
+    },
+    assets: [
+      { id: 'equity', name: 'A股股票', score: 55, view: '中性' },
+      { id: 'hkequity', name: '港股', score: 62, view: '乐观' },
+      { id: 'usequity', name: '美股', score: 45, view: '谨慎' },
+      { id: 'bond', name: '债券', score: 70, view: '乐观' },
+      { id: 'gold', name: '黄金', score: 72, view: '乐观' },
+      { id: 'commodity', name: '商品', score: 38, view: '中性' },
+      { id: 'cash', name: '现金/货币', score: 50, view: '中性' },
+    ],
+    monthlyStrategy: {
+      ym: todayStr.slice(0, 7),
+      content: '',
+    },
+  }
+
   return {
     principles,
     l1,
@@ -818,6 +842,7 @@ export function seedData() {
     memos,
     materials,
     logs,
+    dashboard,
     version: 'v2.0',
   }
 }

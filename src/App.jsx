@@ -11,7 +11,7 @@ import { getGithubToken } from './lib/credentials'
 import tokens from './theme/tokens'
 
 // 本地 store 实体 → 云端集合 映射（仅这些实体参与在线同步）
-const SYNC_MAP = { trades: 'trades', reviews: 'reviews' }
+const SYNC_MAP = { trades: 'trades', reviews: 'reviews', dashboard: 'dashboard' }
 
 /**
  * 应用壳层：TopBar(56) → [Sidebar | (Main 滚动区 + 免责声明条 52)]。

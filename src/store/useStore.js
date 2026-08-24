@@ -109,8 +109,15 @@ export const useStore = create(
           const cloud = Array.isArray(data[entity]) ? data[entity] : null
           if (cloud && cloud.length) patch[entity] = cloud
         }
+        // 看板状态（单一对象，非数组集合）
+        if (data.dashboard && typeof data.dashboard === 'object') {
+          patch.dashboard = data.dashboard
+        }
         if (Object.keys(patch).length) set(patch)
       },
+
+      /** 首页看板：局部更新 dashboard（市场时钟 / 资产吸引力 / 本月策略）。 */
+      updateDashboard: (patch) => set({ dashboard: { ...get().dashboard, ...patch } }),
 
       /** 便捷：错误库（reviews 中 type=错误清单）。 */
       getErrors: () => get().reviews.filter((r) => r.type === '错误清单'),
