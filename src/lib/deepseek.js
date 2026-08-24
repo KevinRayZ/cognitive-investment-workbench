@@ -1,16 +1,17 @@
 /**
- * DeepSeek 大脑 —— OpenAI 兼容接口调用。
- * 工作台内嵌对话区（入口 A）通过本模块调用大模型；
+ * DeepSeek 大脑 —— OpenAI 兼容接口浏览器直连。
+ * 用户在「设置」页填入的 DEEPSEEK_API_KEY 存于浏览器 localStorage，仅在本机请求时附上。
  * system prompt 注入《个人投资体系总纲》核心内容，确保输出严格符合体系。
  */
+import { getDeepseekKey } from './credentials'
 
 const API_URL = 'https://api.deepseek.com/chat/completions'
 const MODEL = 'deepseek-chat'
 
 function getKey() {
-  const key = process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_KEY
+  const key = getDeepseekKey()
   if (!key) {
-    throw new Error('缺少 DeepSeek API Key：请在 server/.env 中设置 DEEPSEEK_API_KEY')
+    throw new Error('缺少 DeepSeek API Key：请在「设置」页填写 DEEPSEEK_API_KEY')
   }
   return key.trim()
 }
@@ -42,12 +43,4 @@ export async function chatCompletion(messages, opts = {}) {
   }
   const json = await res.json()
   return json.choices?.[0]?.message?.content ?? ''
-}
-
-/** 解析对话消息数组中的最后一条用户文本。 */
-export function lastUserText(messages) {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'user') return messages[i].content
-  }
-  return ''
 }

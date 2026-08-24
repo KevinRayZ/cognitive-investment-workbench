@@ -1,6 +1,6 @@
 /**
  * 对话结构化判定 —— 分析对话内容，输出三类意图：知识固化 / 数据记录 / 无事发生。
- * 由 DeepSeek 以 JSON 块输出，后端解析后分流写入知识库或运行数据库。
+ * 由 DeepSeek 以 JSON 块输出，前端解析后分流写入知识库或运行数据库。
  *
  * 返回结构：
  * {
@@ -41,10 +41,8 @@ export const SYSTEM_EXTRACT_PROMPT = `你是「认知投资工作台」的数据
  */
 export function parseExtractJson(text) {
   if (!text) return null
-  // 1) ```json ... ``` 包裹
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   const candidate = fenced ? fenced[1] : text
-  // 2) 找第一个 { 到最后一个 }
   const start = candidate.indexOf('{')
   const end = candidate.lastIndexOf('}')
   if (start === -1 || end === -1 || end <= start) return null

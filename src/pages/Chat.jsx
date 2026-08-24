@@ -18,6 +18,12 @@ import WarningAmber from '@mui/icons-material/WarningAmber'
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
 import StatusPill from '../components/StatusPill'
+import { useStore } from '../store/useStore'
+import { chatCompletion } from '../lib/deepseek'
+import { getKnowledge, buildSystemPrompt } from '../lib/knowledge'
+import { buildExtractMessages, parseExtractJson } from '../lib/extract'
+import { readJson, writeJson, REPO_DATA, REPO_KNOWLEDGE } from '../lib/githubClient'
+import { getGithubToken, getDeepseekKey } from '../lib/credentials'
 
 const INTENT_META = {
   knowledge: { label: '体系知识已固化', tone: 'primary' },
@@ -36,8 +42,9 @@ const STARTERS = [
 ]
 
 /**
- * AI 对话（入口 A）—— 调 DeepSeek 大脑，对话后自动结构化固化到在线数据。
- * 与 WorkBuddy 对话（入口 B）共享同一数据源，效果一致。
+ * AI 对话（入口 A）—— 浏览器直连 DeepSeek 大脑（密钥存于本机浏览器），
+ * 对话后自动结构化固化：交易/复盘写入在线数据库，新认知追加到体系知识库。
+ * 与 WorkBuddy 对话（入口 B）共享同一 GitHub 数据源，效果一致。
  */
 export default function Chat() {
   const [messages, setMessages] = useState([])
@@ -52,25 +59,83 @@ export default function Chat() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
+  const todayStr = () => new Date().toISOString().slice(0, 10)
+
+  // 向 investment-data 仓库的某个集合文件追加一条记录（读-改-写，带 sha）
+  const appendToData = async (file, record) => {
+    const token = getGithubToken()
+    const { data, sha } = await readJson(REPO_DATA, file, token)
+    const list = Array.isArray(data) ? data : []
+    list.push(record)
+    await writeJson(REPO_DATA, file, list, token, `add ${file}`, sha)
+  }
+
+  // 结构化结果路由落库
+  const routeExtract = async (ext) => {
+    const d = ext.data || {}
+    const date = d.date || todayStr()
+    let updated = []
+    const pending = ext.intent === 'knowledge' ? { summary: d.reason || d.title || '体系知识更新', data: d } : null
+    switch (ext.intent) {
+      case 'trade':
+        useStore.getState().create('trades', { ...d, date })
+        updated = ['trades']
+        break
+      case 'review':
+        useStore.getState().create('reviews', { ...d, type: '复盘', date })
+        updated = ['reviews']
+        break
+      case 'reflection':
+        await appendToData('reflections.json', { ...d, date, addedAt: new Date().toISOString() })
+        updated = ['reflections']
+        break
+      case 'position':
+        await appendToData('positions.json', { ...d, date })
+        updated = ['positions']
+        break
+      default:
+        break
+    }
+    setLastIntent({ intent: ext.intent, confidence: ext.confidence || 0, updated })
+    if (pending) setConfirm(pending)
+  }
+
   const send = async (text) => {
     const q = (text ?? input).trim()
     if (!q || loading) return
+    if (!getDeepseekKey()) {
+      setErr('未配置 DeepSeek Key：请先到「设置」页填写 DEEPSEEK_API_KEY')
+      return
+    }
     setInput('')
     setErr('')
+    setLastIntent(null)
     const history = [...messages, { role: 'user', content: q }]
     setMessages(history)
     setLoading(true)
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history }),
-      })
-      const json = await res.json()
-      if (!json.ok) throw new Error(json.error || '请求失败')
-      setMessages([...history, { role: 'assistant', content: json.reply }])
-      setLastIntent({ ...json.extract, updated: json.updated })
-      if (json.pendingConfirm) setConfirm(json.pendingConfirm)
+      // 1) 拉取体系知识 → 构建 system prompt → 调用 DeepSeek 生成回复
+      const k = await getKnowledge()
+      const chatMessages = [
+        { role: 'system', content: buildSystemPrompt(k) },
+        ...history.map((m) => ({ role: m.role, content: m.content })),
+      ]
+      const reply = await chatCompletion(chatMessages)
+      setMessages([...history, { role: 'assistant', content: reply }])
+
+      // 2) 结构化提取（第二次低温度调用，判定 intent），命中则落库
+      if (getGithubToken()) {
+        const extractRaw = await chatCompletion(buildExtractMessages(history, reply), {
+          temperature: 0.2,
+          maxTokens: 800,
+        })
+        const ext = parseExtractJson(extractRaw)
+        if (ext && ext.intent && ext.intent !== 'nothing') {
+          await routeExtract(ext)
+        } else {
+          setLastIntent({ intent: 'nothing', confidence: ext?.confidence || 0, updated: [] })
+        }
+      }
     } catch (e) {
       setErr(e.message)
       setMessages(history)
@@ -82,14 +147,22 @@ export default function Chat() {
   const confirmKnowledge = async (approve) => {
     if (approve && confirm) {
       try {
-        const res = await fetch('/api/knowledge/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: confirm.data }),
-        })
-        const json = await res.json()
-        if (!json.ok) throw new Error(json.error || '写入失败')
-        setLastIntent({ intent: 'knowledge', updated: ['knowledge'] })
+        const token = getGithubToken()
+        const d = confirm.data || {}
+        const entry = {
+          id: 'ADD-' + Date.now(),
+          title: d.title || '新认知',
+          content: d.content || '',
+          reason: d.reason || '',
+          target: d.target || '',
+          addedAt: new Date().toISOString(),
+        }
+        const { data, sha } = await readJson(REPO_KNOWLEDGE, 'system.json', token)
+        const sys = data || {}
+        sys.additions = Array.isArray(sys.additions) ? sys.additions : []
+        sys.additions.push(entry)
+        await writeJson(REPO_KNOWLEDGE, 'system.json', sys, token, `add knowledge: ${entry.title}`, sha)
+        setLastIntent({ intent: 'knowledge', confidence: 1, updated: ['knowledge'] })
       } catch (e) {
         setErr(e.message)
       }

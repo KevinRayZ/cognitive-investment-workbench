@@ -11,9 +11,10 @@ import MethodL2 from './pages/MethodL2'
 import ObservationL6 from './pages/ObservationL6'
 import AiProtocol from './pages/AiProtocol'
 import Chat from './pages/Chat'
+import Settings from './pages/Settings'
 
 /**
- * 路由表（十屏 + 研究列表）。
+ * 路由表（十屏 + 研究列表 + 设置）。
  * 所有页面经 App 壳层渲染，统一含 TopBar / Sidebar / 免责声明条。
  */
 export const router = createBrowserRouter([
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: 'methods', element: <MethodL2 /> },
       { path: 'inspiration', element: <ObservationL6 /> },
       { path: 'ai-protocol', element: <AiProtocol /> },
+      { path: 'settings', element: <Settings /> },
     ],
   },
 ])

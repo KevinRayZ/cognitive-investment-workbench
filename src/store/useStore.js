@@ -101,13 +101,13 @@ export const useStore = create(
         set(patch)
       },
 
-      /** v2.0.0 在线化：用云端数据初始化本地 store（服务器优先，空集合保留本地示例兜底）。 */
+      /** 在线化：用云端数据初始化本地 store（云端非空优先，空集合保留本地示例）。 */
       hydrateFromServer: (data) => {
         if (!data) return
         const patch = {}
-        for (const [entity, collection] of Object.entries({ trades: 'trades', reviews: 'reviews' })) {
-          const cloud = data[collection]
-          if (Array.isArray(cloud) && cloud.length) patch[entity] = cloud
+        for (const entity of Object.keys(ENTITY_META)) {
+          const cloud = Array.isArray(data[entity]) ? data[entity] : null
+          if (cloud && cloud.length) patch[entity] = cloud
         }
         if (Object.keys(patch).length) set(patch)
       },

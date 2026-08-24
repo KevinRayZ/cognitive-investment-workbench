@@ -12,6 +12,7 @@ import Home from '@mui/icons-material/Home'
 import AccountBalance from '@mui/icons-material/AccountBalance'
 import SmartToy from '@mui/icons-material/SmartToy'
 import Forum from '@mui/icons-material/Forum'
+import Settings from '@mui/icons-material/Settings'
 
 import tokens from '../theme/tokens'
 
@@ -34,6 +35,7 @@ const CORE = [
 const SYSTEM = [
   { label: '三层记忆', path: '/memory', icon: AccountBalance },
   { label: 'AI 协作协议', path: '/ai-protocol', icon: SmartToy },
+  { label: '设置', path: '/settings', icon: Settings },
 ]
 
 function Section({ title, items, navigate, location }) {

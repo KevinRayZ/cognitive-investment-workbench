@@ -1,17 +1,20 @@
 /**
  * 知识库上下文 —— 从 investment-system 私有仓库拉取体系知识，构建 AI 的 system prompt。
- * 双入口（工作台内嵌 / WorkBuddy 外部）共用同一权威体系源。
+ * 双入口（工作台网页 / WorkBuddy 外部）共用同一权威体系源。
  */
-import { readJson, REPO_KNOWLEDGE } from './github.js'
+import { readJson, REPO_KNOWLEDGE } from './githubClient'
+import { getGithubToken } from './credentials'
 
 const CACHE_TTL = 10 * 60 * 1000 // 10 分钟缓存
 let cache = { at: 0, data: null }
 
-/** 拉取最新体系知识（system.json），带短缓存。 */
+/** 拉取最新体系知识（system.json），带短缓存。无 token 返回 null。 */
 export async function getKnowledge() {
+  const token = getGithubToken()
+  if (!token) return null
   if (cache.data && Date.now() - cache.at < CACHE_TTL) return cache.data
-  const { data } = await readJson(REPO_KNOWLEDGE, 'system.json')
-  cache = { at: Date.now(), data: data || {} }
+  const { data } = await readJson(REPO_KNOWLEDGE, 'system.json', token)
+  cache = { at: Date.now(), data: data || null }
   return cache.data
 }
 
@@ -19,7 +22,10 @@ export async function getKnowledge() {
 export function buildSystemPrompt(k) {
   const beliefs = (k.beliefs || []).map((b) => `- ${b.id} ${b.title}：${b.statement}`).join('\n')
   const strategies = (k.strategies || [])
-    .map((s) => `- ${s.id} ${s.name}（${s.layer}，权重${s.weight}）：场景[${(s.scenario || []).join('、')}]；红线[${(s.redlines || []).join('；')}]`)
+    .map(
+      (s) =>
+        `- ${s.id} ${s.name}（${s.layer}，权重${s.weight}）：场景[${(s.scenario || []).join('、')}]；红线[${(s.redlines || []).join('；')}]`,
+    )
     .join('\n')
   const pp = k.personalProfile || {}
   const limits = k.positionLimits || {}
@@ -38,7 +44,12 @@ ${strategies}
 
 【个人硬约束】资金周期 ${pp.capitalPeriod || '2年'}；最大回撤 ${pp.maxDrawdown || '30%'}；能力圈：${(pp.capabilityCircle || []).join('、')}。
 【仓位约束】单票上限：价值 15% / GARP 10% / 逆向 5%；行业 ≤ 权益 30%；逆向总仓 ≤ 15%；分批建仓、逻辑止损优先。
-【周期矩阵】${(k.cycleMatrix || []).map((c) => `${c.phase}：权益${c.equities} 债券${c.bonds} 黄金${c.gold} 现金${c.cash}`).join('；')}
+【周期矩阵】${(k.cycleMatrix || [])
+    .map((c) => `${c.phase}：权益${c.equities} 债券${c.bonds} 黄金${c.gold} 现金${c.cash}`)
+    .join('；')}
+
+【用户持续沉淀的新认知】（均经本人确认后写入）
+${(k.additions || []).map((a) => `- ${a.title}：${a.content}`).join('\n') || '（暂无）'}
 
 【回答要求】专业、结构化、给结论先给主见再展开；涉及参数标注来源；对违背体系的操作主动提示风险；不做收益承诺。`
 }

@@ -1,22 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
+// 纯静态站点（无后端）。base 用相对路径，便于 CloudStudio 子路径部署。
 export default defineConfig({
   plugins: [react()],
+  base: './',
   server: {
     port: 5173,
     host: true,
-    proxy: {
-      // 本地后端（GitHub 数据层 + DeepSeek 大脑）
-      '/api': 'http://localhost:8787',
-    },
   },
   preview: {
     port: 4173,
     host: true,
-    proxy: {
-      '/api': 'http://localhost:8787',
-    },
   },
 })
