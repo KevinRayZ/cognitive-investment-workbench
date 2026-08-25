@@ -113,11 +113,21 @@ export const useStore = create(
         if (data.dashboard && typeof data.dashboard === 'object') {
           patch.dashboard = data.dashboard
         }
+        // 实时分析缓存（单一对象，非数组集合）
+        if (data.analysis && typeof data.analysis === 'object') {
+          patch.analysis = data.analysis
+        }
         if (Object.keys(patch).length) set(patch)
       },
 
       /** 首页看板：局部更新 dashboard（市场时钟 / 资产吸引力 / 本月策略）。 */
       updateDashboard: (patch) => set({ dashboard: { ...get().dashboard, ...patch } }),
+
+      /** 实时分析缓存：垂类 Agent 分析输出（标的级 + 宏观级）。 */
+      setAnalysisTargets: (obj) => set({ analysis: { ...get().analysis, targets: obj } }),
+      setAnalysisTarget: (code, r) =>
+        set({ analysis: { ...get().analysis, targets: { ...get().analysis.targets, [code]: r } } }),
+      setAnalysisMacro: (m) => set({ analysis: { ...get().analysis, macro: m } }),
 
       /** 便捷：错误库（reviews 中 type=错误清单）。 */
       getErrors: () => get().reviews.filter((r) => r.type === '错误清单'),

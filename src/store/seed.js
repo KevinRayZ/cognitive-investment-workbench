@@ -843,6 +843,7 @@ export function seedData() {
     materials,
     logs,
     dashboard,
+    analysis: { targets: {}, macro: null }, // 实时分析结果缓存（垂类 Agent 分析输出）
     version: 'v2.0',
   }
 }

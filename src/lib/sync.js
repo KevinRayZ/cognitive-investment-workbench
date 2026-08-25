@@ -14,6 +14,7 @@ export const SYNC_COLLECTIONS = {
   positions: 'positions.json',
   conversations: 'conversations.json',
   dashboard: 'dashboard.json',
+  analysis: 'analysis-cache.json',
 }
 
 let shaCache = {} // entity -> sha（内存，用于乐观写入）
@@ -45,6 +46,16 @@ export async function pullAll() {
     }
   } catch (e) {
     // 云端尚无 dashboard.json 时忽略
+  }
+  // analysis-cache 为单一对象（非数组集合），单独拉取
+  try {
+    const { data: an, sha: anSha } = await readJson(REPO_DATA, 'analysis-cache.json', token)
+    if (an && typeof an === 'object' && !Array.isArray(an)) {
+      result.analysis = an
+      shaMap.analysis = anSha
+    }
+  } catch (e) {
+    // 云端尚无 analysis-cache.json 时忽略
   }
   shaCache = { ...shaMap }
   return { result, shaMap }
