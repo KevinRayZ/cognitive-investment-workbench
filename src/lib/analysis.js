@@ -14,6 +14,7 @@ import { chatCompletion } from './deepseek'
 import { getQuote } from './quotes'
 import { buildSystemPrompt, getKnowledge } from './knowledge'
 import { useStore } from '../store/useStore'
+import { posToPhase, clampPos } from '../utils/dashboard'
 
 const TTL = {
   macro: 30 * 24 * 3600 * 1000, // 30 天
@@ -105,6 +106,8 @@ export async function analyzeMacro() {
   const user = `请基于你对中国宏观经济最新阶段（复苏/过热/滞胀/衰退）的判断，严格输出 JSON：
 {
   "phase": "复苏|过热|滞胀|衰退",
+  "growth": -100~100 整数（0=中性；正=扩张/上行，负=放缓或收缩；用于梅林时钟连续定位，落在「衰退/复苏」边界附近时给出如 -15 这类非整数端点值），
+  "inflation": -100~100 整数（0=中性；正=通胀上行，负=通缩压力；同样用连续值定位），
   "rationale": "定位理由（1-2 句，含增长/通胀判断）",
   "assetViews": {
     "equity": 0-100, "hkequity": 0-100, "usequity": 0-100,
@@ -113,7 +116,7 @@ export async function analyzeMacro() {
   "assetNotes": "大类资产一句话配置建议",
   "confidence": "高/中/低"
 }
-注：宏观数据可能非最新，请在 rationale 中标注判断所依据的时间点或数据敏感点。`
+注：宏观数据可能非最新，请在 rationale 中标注判断所依据的时间点或数据敏感点。growth/inflation 请尽量贴近真实坐标，而非机械取象限中心。`
   const text = await chatCompletion([{ role: 'system', content: system }, { role: 'user', content: user }], {
     temperature: 0.3,
     maxTokens: 900,
@@ -194,6 +197,23 @@ export async function runRealtimeAnalysis({ force = false, onlyCode = null } = {
       ok: false,
     }))
     s.setAnalysisMacro(m)
+    // AI 宏观带连续坐标时，自动定位梅林时钟落点（用户手动调整过则不打断）
+    if (typeof m.growth === 'number' && typeof m.inflation === 'number' && !m.error) {
+      const mc = s.dashboard && s.dashboard.marketClock
+      if (mc && mc.posSource !== 'manual') {
+        const g = clampPos(m.growth)
+        const i = clampPos(m.inflation)
+        s.updateDashboard({
+          marketClock: {
+            ...mc,
+            pos: { growth: g, inflation: i },
+            phase: posToPhase({ growth: g, inflation: i }),
+            posSource: 'ai',
+            updatedAt: new Date().toISOString().slice(0, 10),
+          },
+        })
+      }
+    }
     macro = true
   }
 

@@ -24,6 +24,31 @@ function migrateV2(persisted) {
   return merged
 }
 
+// v2 → v3：梅林时钟升级为连续坐标。保留用户看板数据（备注、资产吸引力、月度策略），
+// 仅为缺失 pos 的 marketClock 注入默认连续坐标。
+function migrateV3(persisted) {
+  const fresh = seedData()
+  const merged = {}
+  for (const key of Object.keys(fresh)) {
+    const oldVal = persisted && persisted[key]
+    const freshVal = fresh[key]
+    if (Array.isArray(freshVal)) {
+      const oldList = Array.isArray(oldVal) ? oldVal : []
+      merged[key] = [...oldList.filter((it) => !it || !it.isSample), ...freshVal]
+    } else if (key === 'dashboard') {
+      merged[key] = { ...freshVal, ...(oldVal || {}) }
+      const freshClock = (freshVal && freshVal.marketClock) || {}
+      const mc = merged[key].marketClock
+      if (!mc || !mc.pos || typeof mc.pos.growth !== 'number' || typeof mc.pos.inflation !== 'number') {
+        merged[key].marketClock = { ...freshClock, ...mc, pos: freshClock.pos, posSource: 'ai' }
+      }
+    } else {
+      merged[key] = oldVal || freshVal
+    }
+  }
+  return merged
+}
+
 // 实体 → 数组键 / 业务编号类型 映射
 const ENTITY_META = {
   principles: { key: 'principles', idType: 'IS', idField: 'id' },
@@ -260,8 +285,8 @@ export const useStore = create(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 2,
-      migrate: migrateV2,
+      version: 3,
+      migrate: migrateV3,
     },
   ),
 )

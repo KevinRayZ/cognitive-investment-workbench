@@ -29,7 +29,7 @@ import StatusPill from '../components/StatusPill'
 import IdBadge from '../components/IdBadge'
 import MerrillClock from '../components/dashboard/MerrillClock'
 import AssetAttractiveness from '../components/dashboard/AssetAttractiveness'
-import { deriveHoldings, checkHealth, HARD_RULES, CLOCK_PHASES } from '../utils/dashboard'
+import { deriveHoldings, checkHealth, HARD_RULES, CLOCK_PHASES, posToPhase, phaseToPos } from '../utils/dashboard'
 import { fmtCurrency, fmtSignedCurrency, fmtPct } from '../utils/formatters'
 import { runRealtimeAnalysis } from '../lib/analysis'
 
@@ -174,7 +174,8 @@ export default function Home() {
   }
 
   const { marketClock, assets, monthlyStrategy } = dashboard || {}
-  const clock = marketClock || { phase: '衰退', note: '', updatedAt: '' }
+  const clock = marketClock || { phase: '衰退', pos: { growth: -12, inflation: -34 }, posSource: 'ai', note: '', updatedAt: '' }
+  const clockPos = clock.pos || phaseToPos(clock.phase)
   const assetList = assets || []
   const strategy = monthlyStrategy || { ym: todayYm(), content: '' }
   const macro = analysis?.macro
@@ -189,8 +190,10 @@ export default function Home() {
   const heldTargetIds = new Set(trades.filter((t) => t.status !== '已平仓' && t.targetId).map((t) => t.targetId))
   const watchlist = targets.filter((t) => !heldTargetIds.has(t.id))
 
-  const onClockPhase = (p) =>
-    updateDashboard({ marketClock: { ...clock, phase: p, updatedAt: new Date().toISOString().slice(0, 10) } })
+  const onClockPos = (pos) =>
+    updateDashboard({
+      marketClock: { ...clock, pos, phase: posToPhase(pos), posSource: 'manual', updatedAt: new Date().toISOString().slice(0, 10) },
+    })
   const onClockNote = (note) => updateDashboard({ marketClock: { ...clock, note } })
   const onAssetChange = (id, patch) =>
     updateDashboard({ assets: assetList.map((a) => (a.id === id ? { ...a, ...patch } : a)) })
@@ -262,7 +265,7 @@ export default function Home() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card>
               <SectionTitle desc="点击时钟象限定位当前中国经济所处阶段（梅林时钟）；下方为 AI 实时研判">宏观经济周期定位</SectionTitle>
-              <MerrillClock phase={clock.phase} note={clock.note} onPhase={onClockPhase} onNote={onClockNote} />
+              <MerrillClock pos={clockPos} phase={clock.phase} note={clock.note} onPos={onClockPos} onNote={onClockNote} />
               {macro?.phase && (
                 <Box sx={{ mt: 1.5, p: 1.5, borderRadius: tokens.radius.md, bgcolor: tokens.bgPage, border: `1px dashed ${tokens.border}` }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>

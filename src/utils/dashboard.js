@@ -46,6 +46,49 @@ export const CLOCK_PHASES = {
   衰退: { growth: '↓', inflation: '↓', asset: '债券 + 黄金', angle: 225, accent: '#0EA5A4' },
 }
 
+/** 顺时针轮动顺序（屏幕视角）：衰退→复苏→过热→滞胀→衰退。 */
+export const PHASE_CYCLE = ['衰退', '复苏', '过热', '滞胀']
+
+/** 连续坐标 pos = { growth:-100~100, inflation:-100~100 } → 最近阶段。 */
+export function posToPhase(pos = { growth: 0, inflation: 0 }) {
+  const g = Number(pos.growth) || 0
+  const i = Number(pos.inflation) || 0
+  if (g >= 0 && i < 0) return '复苏'
+  if (g >= 0 && i >= 0) return '过热'
+  if (g < 0 && i >= 0) return '滞胀'
+  return '衰退'
+}
+
+/** 连续坐标 → 数学角（度，0~360），用于标签/过渡判断。 */
+export function posToAngle(pos = { growth: 0, inflation: 0 }) {
+  const g = Number(pos.growth) || 0
+  const i = Number(pos.inflation) || 0
+  const a = (Math.atan2(g, i) * 180) / Math.PI
+  return ((a % 360) + 360) % 360
+}
+
+/** 将值限幅到 -100~100（梅林时钟坐标范围）。 */
+export function clampPos(v) {
+  return Math.max(-100, Math.min(100, Number(v) || 0))
+}
+
+/** 周期中下一阶段（用于「过渡方向」提示）。 */
+export function nextPhase(phase) {
+  const idx = PHASE_CYCLE.indexOf(phase)
+  return PHASE_CYCLE[(idx + 1) % PHASE_CYCLE.length]
+}
+
+/** 阶段 → 默认连续坐标（象限内偏中心；衰退用贴近复苏边界的实际研判点）。 */
+export function phaseToPos(phase) {
+  const map = {
+    复苏: { growth: 35, inflation: -35 },
+    过热: { growth: 35, inflation: 35 },
+    滞胀: { growth: -35, inflation: 35 },
+    衰退: { growth: -12, inflation: -34 },
+  }
+  return map[phase] || { growth: -12, inflation: -34 }
+}
+
 /**
  * 从交易记录衍生当前持仓（未平仓 = 持有），按标的聚合。
  * @returns {{holdings:Array, totalCNY:number}}
