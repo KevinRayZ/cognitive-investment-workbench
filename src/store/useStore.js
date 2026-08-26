@@ -49,6 +49,39 @@ function migrateV5(persisted) {
   return merged
 }
 
+// v5 → v6：资产情况更新为真实持仓。保留用户自定义（非样本）记录，
+// 用最新种子中的真实持仓（目标/交易/基金/行业观察）替换旧示例（isSample）记录。
+function migrateV6(persisted) {
+  return migrateV5(persisted)
+}
+
+// v6 → v7：修正美股持仓 MU/ALB/ARKK 的 currentPrice 覆盖市值问题，
+// 重新注入最新种子（真实持仓 + 电网ETF观察），保留用户非样本记录。
+function migrateV7(persisted) {
+  return migrateV6(persisted)
+}
+
+// v7 → v8：v6 时期缓存数据曾把部分 target 的 currentPrice 写成 1，
+// 导致市值计算错乱，且旧持仓记录与种子重复聚合。
+// 对持仓相关实体（目标/交易/基金/行业观察）整体重置为最新种子数据，
+// 其余实体（原则/方法/策略/评分卡等）保留原迁移逻辑。
+const HOLDINGS_KEYS = ['targets', 'trades', 'funds', 'industryWatches']
+function migrateV8(persisted) {
+  const merged = migrateV7(persisted)
+  const fresh = seedData()
+  for (const key of HOLDINGS_KEYS) {
+    merged[key] = fresh[key]
+  }
+  return merged
+}
+
+// v8 → v9：v8 迁移时种子中部分持仓 target 仍残留 currentPrice=1/100，
+// 导致市值错乱并已写入存储。升级以用修正后的最新种子（全部 currentPrice=null）
+// 重新整体重置持仓相关实体。
+function migrateV9(persisted) {
+  return migrateV8(persisted)
+}
+
 // 实体 → 数组键 / 业务编号类型 映射
 const ENTITY_META = {
   principles: { key: 'principles', idType: 'IS', idField: 'id' },
@@ -343,8 +376,8 @@ export const useStore = create(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 5,
-      migrate: migrateV5,
+      version: 9,
+      migrate: migrateV9,
     },
   ),
 )

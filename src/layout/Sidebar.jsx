@@ -160,7 +160,7 @@ export default function Sidebar() {
         </Box>
         <Box>
           <Typography sx={{ fontWeight: 800, color: tokens.ink900, fontSize: 14, lineHeight: 1.2 }}>认知投资</Typography>
-          <Typography sx={{ fontSize: 10, color: tokens.ink400, letterSpacing: '0.5px' }}>v2.6.0</Typography>
+          <Typography sx={{ fontSize: 10, color: tokens.ink400, letterSpacing: '0.5px' }}>v2.7.0</Typography>
         </Box>
       </Box>
 
