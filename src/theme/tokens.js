@@ -17,14 +17,17 @@ export const tokens = {
   // 品牌色（人类 / Indigo）
   primary: '#2F54EB',
   primarySoft: '#EEEFFA',
+  primaryGradient: 'linear-gradient(135deg, #2F54EB 0%, #4A6CF7 100%)',
 
   // AI 色（Teal）
   ai: '#0EA5A4',
   aiSoft: '#E6F7F6',
+  aiGradient: 'linear-gradient(135deg, #0EA5A4 0%, #14B8B6 100%)',
 
   // 警示色（Amber）
   warn: '#F5A524',
   warnSoft: '#FFF6E5',
+  warnGradient: 'linear-gradient(135deg, #F5A524 0%, #FFB845 100%)',
 
   // 金融语义色（红涨绿跌 · 中国惯例）
   up: '#E5484D', // 涨 / 盈利 / 正向
@@ -41,6 +44,24 @@ export const tokens = {
 
   // 内边距
   pad: { sm: 12, md: 16, lg: 24 },
+
+  // 阴影（柔和层次，避免硬阴影）
+  shadow: {
+    xs: '0 1px 2px rgba(15, 23, 41, 0.04)',
+    sm: '0 2px 8px rgba(15, 23, 41, 0.06)',
+    md: '0 4px 16px rgba(15, 23, 41, 0.08)',
+    lg: '0 8px 32px rgba(15, 23, 41, 0.10)',
+    primary: '0 4px 12px rgba(47, 84, 235, 0.12)',
+    ai: '0 4px 12px rgba(14, 165, 164, 0.12)',
+    warn: '0 4px 12px rgba(245, 165, 36, 0.12)',
+  },
+
+  // 过渡
+  transition: {
+    fast: '0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+    base: '0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    slow: '0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  },
 }
 
 // ID 徽章配色（按前缀区分）

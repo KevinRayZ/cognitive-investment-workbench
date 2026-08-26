@@ -24,9 +24,9 @@ function migrateV2(persisted) {
   return merged
 }
 
-// v2 → v3：梅林时钟升级为连续坐标。保留用户看板数据（备注、资产吸引力、月度策略），
-// 仅为缺失 pos 的 marketClock 注入默认连续坐标。
-function migrateV3(persisted) {
+// v4 → v5：新增策略(strategies)、月度策略(monthlyStrategies)、评分卡(scoreCards)、基金分析(fundAnalysisJobs)
+// 为现有用户注入新实体种子数据
+function migrateV5(persisted) {
   const fresh = seedData()
   const merged = {}
   for (const key of Object.keys(fresh)) {
@@ -61,6 +61,12 @@ const ENTITY_META = {
   memos: { key: 'memos', idType: 'MEMO', idField: 'id' },
   materials: { key: 'materials', idType: null },
   logs: { key: 'logs', idType: null },
+  funds: { key: 'funds', idType: null },
+  industryWatches: { key: 'industryWatches', idType: null },
+  strategies: { key: 'strategies', idType: 'ST', idField: 'id' }, // L3季度策略
+  monthlyStrategies: { key: 'monthlyStrategies', idType: 'MS', idField: 'id' }, // L4月度策略
+  scoreCards: { key: 'scoreCards', idType: 'SC', idField: 'id' }, // L5/L6评分卡
+  fundAnalysisJobs: { key: 'fundAnalysisJobs', idType: 'FA', idField: 'id' }, // 基金代码穿透分析
 }
 
 function today() {
@@ -216,6 +222,54 @@ export const useStore = create(
             tone: 'neutral',
           })
         }
+        // 行业观察：择时入场状态
+        const industryToEnter = (s.industryWatches || []).filter((i) => i.status === '择时入场')
+        if (industryToEnter.length) {
+          items.push({
+            id: 'industry',
+            type: '行业择时',
+            label: `行业趋势已确认择时入场（${industryToEnter.length} 个）`,
+            count: industryToEnter.length,
+            route: '/industry-watch',
+            tone: 'ai',
+          })
+        }
+        // 基金观察中状态
+        const fundsToReview = (s.funds || []).filter((f) => f.status === '观察中')
+        if (fundsToReview.length) {
+          items.push({
+            id: 'fund',
+            type: '基金观察',
+            label: `待评估的基金（${fundsToReview.length} 只）`,
+            count: fundsToReview.length,
+            route: '/funds',
+            tone: 'warn',
+          })
+        }
+        // L3季度策略待审定
+        const strategiesPending = (s.strategies || []).filter((st) => st.status === '草稿')
+        if (strategiesPending.length) {
+          items.push({
+            id: 'st-draft',
+            type: '季度策略',
+            label: `待审定的季度策略（${strategiesPending.length} 份）`,
+            count: strategiesPending.length,
+            route: '/strategy',
+            tone: 'neutral',
+          })
+        }
+        // 基金代码穿透分析 待人工复核
+        const faPending = (s.fundAnalysisJobs || []).filter((f) => f.overallStatus === '待人工复核')
+        if (faPending.length) {
+          items.push({
+            id: 'fa-review',
+            type: '基金分析复核',
+            label: `基金代码分析待人工复核（${faPending.length} 个）`,
+            count: faPending.length,
+            route: '/fund-analyze',
+            tone: 'warn',
+          })
+        }
         return items
       },
 
@@ -229,6 +283,10 @@ export const useStore = create(
           insights: s.observations.length,
           pendingGates,
           monthTrades,
+          fundsCount: (s.funds || []).length,
+          industriesCount: (s.industryWatches || []).length,
+          strategiesCount: (s.strategies || []).length,
+          scoreCardsCount: (s.scoreCards || []).length,
           memoryVersion: s.version || 'v1.0',
         }
       },
@@ -285,8 +343,8 @@ export const useStore = create(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 3,
-      migrate: migrateV3,
+      version: 5,
+      migrate: migrateV5,
     },
   ),
 )

@@ -2,7 +2,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
-import ShieldCheck from '@mui/icons-material/Shield'
 
 import tokens from '../theme/tokens'
 
@@ -16,7 +15,7 @@ const NAV = [
 ]
 
 /**
- * 顶部条（高 56）：品牌名 + 6 项主导航（当前项高亮 primary）。
+ * 顶部条（高 56）：精简导航（侧边栏已有完整导航，这里只放快捷入口）。
  */
 export default function TopBar() {
   const navigate = useNavigate()
@@ -30,7 +29,7 @@ export default function TopBar() {
   return (
     <Box
       sx={{
-        height: 56,
+        height: 52,
         flexShrink: 0,
         bgcolor: tokens.surface,
         borderBottom: `1px solid ${tokens.border}`,
@@ -40,11 +39,6 @@ export default function TopBar() {
         gap: 3,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => navigate('/')}>
-        <ShieldCheck sx={{ color: tokens.primary, fontSize: 22 }} />
-        <Typography sx={{ fontWeight: 700, color: tokens.ink900, fontSize: 16 }}>认知投资工作台</Typography>
-      </Box>
-
       <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
         {NAV.map((item) => {
           const active = isActive(item.path)
@@ -55,21 +49,15 @@ export default function TopBar() {
               sx={{
                 color: active ? tokens.primary : tokens.ink500,
                 fontWeight: active ? 700 : 500,
-                fontSize: 14,
-                px: 2,
-                position: 'relative',
-                '&::after': active
-                  ? {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 6,
-                      left: 16,
-                      right: 16,
-                      height: 2,
-                      bgcolor: tokens.primary,
-                      borderRadius: 2,
-                    }
-                  : {},
+                fontSize: 13,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: tokens.radius.md,
+                bgcolor: active ? tokens.primarySoft : 'transparent',
+                transition: `all ${tokens.transition.fast}`,
+                '&:hover': {
+                  bgcolor: active ? tokens.primarySoft : tokens.bgPage,
+                },
               }}
             >
               {item.label}

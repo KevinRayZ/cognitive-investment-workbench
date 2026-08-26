@@ -19,6 +19,12 @@ import {
   createMaterial,
   createChangeLog,
   createMemo,
+  createFund,
+  createIndustryWatch,
+  createStrategy,
+  createMonthlyStrategy,
+  createScoreCard,
+  createFundAnalysisJob,
 } from '../models/schemas'
 
 export function seedData() {
@@ -835,6 +841,598 @@ export function seedData() {
     },
   }
 
+  // ---------- 12. 主动型基金 ----------
+  const funds = [
+    createFund({
+      code: '110022',
+      name: '易方达消费行业股票',
+      fundType: '主动股票型',
+      investmentStyle: '消费',
+      manager: '萧楠',
+      managerTenure: 8,
+      inceptionDate: '2010-08-20',
+      aum: 85,
+      performance: {
+        ytdReturn: 8.5,
+        oneYearReturn: 12.3,
+        threeYearReturn: 8.2,
+        maxDrawdown: -18.5,
+        sharpeRatio: 0.92,
+        volatility: 18.3,
+      },
+      riskMetrics: {
+        trackingError: 6.8,
+        informationRatio: 0.65,
+        downsideRisk: -12.5,
+      },
+      holdings: {
+        topHoldings: [
+          { name: '贵州茅台', weight: 9.8 },
+          { name: '五粮液', weight: 9.5 },
+          { name: '伊利股份', weight: 8.2 },
+          { name: '海天味业', weight: 7.8 },
+          { name: '洋河股份', weight: 7.5 },
+        ],
+        industryDistribution: [
+          { industry: '食品饮料', weight: 42 },
+          { industry: '家用电器', weight: 18 },
+          { industry: '商业贸易', weight: 12 },
+          { industry: '医药生物', weight: 10 },
+          { industry: '其他', weight: 18 },
+        ],
+        styleExposure: { growth: 35, value: 25, quality: 28, momentum: 12 },
+        turnoverRate: 85,
+      },
+      valuation: {
+        pePercentile: 55,
+        categoryRank: '45/186',
+      },
+      status: '已入选',
+      score: 78,
+      analysisNotes: '消费行业主动基金，经理风格稳健，长期跑赢同类。持仓集中在食品饮料龙头，估值合理。',
+      relatedIsIds: ['IS-2026-002', 'IS-2026-003'],
+      isSample: true,
+    }),
+    createFund({
+      code: '161725',
+      name: '招商中证白酒指数(LOF)A',
+      fundType: '行业主题',
+      investmentStyle: '消费',
+      manager: '侯昊',
+      managerTenure: 6,
+      inceptionDate: '2015-05-27',
+      aum: 120,
+      performance: {
+        ytdReturn: 5.2,
+        oneYearReturn: 8.8,
+        threeYearReturn: 6.5,
+        maxDrawdown: -22.3,
+        sharpeRatio: 0.78,
+        volatility: 20.5,
+      },
+      riskMetrics: {
+        trackingError: 8.5,
+        informationRatio: 0.52,
+        downsideRisk: -15.2,
+      },
+      holdings: {
+        topHoldings: [
+          { name: '贵州茅台', weight: 15.2 },
+          { name: '五粮液', weight: 14.8 },
+          { name: '山西汾酒', weight: 12.5 },
+          { name: '泸州老窖', weight: 11.8 },
+          { name: '洋河股份', weight: 10.5 },
+        ],
+        industryDistribution: [{ industry: '白酒', weight: 85 }, { industry: '其他消费', weight: 15 }],
+        styleExposure: { growth: 20, value: 35, quality: 30, momentum: 15 },
+        turnoverRate: 45,
+      },
+      valuation: {
+        pePercentile: 62,
+        categoryRank: '38/186',
+      },
+      status: '观察中',
+      score: 72,
+      analysisNotes: '白酒主题基金，高纯度行业暴露，适合看好白酒行业时参与。当前估值中等偏高。',
+      relatedIsIds: ['IS-2026-005'],
+      isSample: true,
+    }),
+    createFund({
+      code: '005827',
+      name: '易方达蓝筹精选混合',
+      fundType: '混合型',
+      investmentStyle: '均衡',
+      manager: '张坤',
+      managerTenure: 10,
+      inceptionDate: '2018-09-05',
+      aum: 280,
+      performance: {
+        ytdReturn: 3.2,
+        oneYearReturn: 5.5,
+        threeYearReturn: 7.8,
+        maxDrawdown: -25.8,
+        sharpeRatio: 0.85,
+        volatility: 19.5,
+      },
+      riskMetrics: {
+        trackingError: 7.2,
+        informationRatio: 0.58,
+        downsideRisk: -14.2,
+      },
+      holdings: {
+        topHoldings: [
+          { name: '贵州茅台', weight: 9.8 },
+          { name: '五粮液', weight: 9.2 },
+          { name: '腾讯控股', weight: 8.8 },
+          { name: '泸州老窖', weight: 7.5 },
+          { name: '伊利股份', weight: 6.8 },
+        ],
+        industryDistribution: [
+          { industry: '食品饮料', weight: 35 },
+          { industry: '电子科技', weight: 25 },
+          { industry: '医药生物', weight: 15 },
+          { industry: '金融地产', weight: 10 },
+          { industry: '其他', weight: 15 },
+        ],
+        styleExposure: { growth: 30, value: 28, quality: 30, momentum: 12 },
+        turnoverRate: 55,
+      },
+      valuation: {
+        pePercentile: 48,
+        categoryRank: '32/186',
+      },
+      status: '已入选',
+      score: 80,
+      analysisNotes: '知名蓝筹基金，经理风格均衡，A股+港股配置，长期业绩稳健。规模较大，注意风格漂移风险。',
+      relatedIsIds: ['IS-2026-001', 'IS-2026-002'],
+      isSample: true,
+    }),
+  ]
+
+  // ---------- 13. 行业趋势观察 ----------
+  const industryWatches = [
+    createIndustryWatch({
+      name: '食品饮料',
+      code: 'CS0101',
+      category: '二级重点',
+      trend: { current: '拐点待确认', direction: '中性', score: 55 },
+      status: '趋势确认',
+      prosperity: {
+        score: 3,
+        revenueGrowth: 5.2,
+        profitGrowth: 8.5,
+        capacityUtilization: 72,
+        orderVisibility: 65,
+        pmiNewOrders: 50.2,
+        change: '上行',
+      },
+      valuation: {
+        pe: 28.5,
+        pePercentile: 42,
+        pb: 4.2,
+        pbPercentile: 38,
+        dividendYield: 2.5,
+        fairValue: '25-32',
+      },
+      capitalFlow: {
+        mainFlow: 15.2,
+        northFlow: 8.5,
+        etfShareChange: 3.2,
+        trend: '流入',
+      },
+      policy: {
+        supportLevel: '中性',
+        keyPolicies: [
+          { name: '扩内需战略规划', date: '2026-06', impact: '正面' },
+          { name: '食品饮料行业规范', date: '2026-03', impact: '中性' },
+        ],
+        notes: '消费复苏政策逐步落地，关注社零数据变化',
+      },
+      indicators: {
+        prosperityTrend: true,
+        capitalFlowTrend: true,
+        valuationTrend: true,
+        policyTrend: true,
+        confirmed: false,
+      },
+      triggerConditions: {
+        entry: ['社零增速连续2个月回升', '白酒批价企稳回升', '北向资金持续流入'],
+        exit: ['景气度下行', '估值分位超过70%', '资金持续流出'],
+      },
+      relatedTargets: [
+        { targetId: 'T-02097', targetName: '蜜雪集团', weight: 3 },
+        { targetId: 'T-06055', targetName: '中烟香港', weight: 2 },
+      ],
+      researchNotes: [
+        { date: '2026-08-20', content: '消费板块估值回调基本到位，关注三季度业绩验证', author: 'AI' },
+        { date: '2026-08-15', content: '白酒行业批价数据企稳，渠道库存逐步消化', author: 'AI' },
+      ],
+      allocationSuggestion: { position: 10, type: '底仓', timing: '等待信号' },
+      isSample: true,
+    }),
+    createIndustryWatch({
+      name: '半导体',
+      code: 'CS0111',
+      category: '二级重点',
+      trend: { current: '拐点待确认', direction: '看多', score: 62 },
+      status: '择时入场',
+      prosperity: {
+        score: 4,
+        revenueGrowth: 15.8,
+        profitGrowth: 22.5,
+        capacityUtilization: 85,
+        orderVisibility: 78,
+        pmiNewOrders: 52.5,
+        change: '上行',
+      },
+      valuation: {
+        pe: 45.2,
+        pePercentile: 52,
+        pb: 5.8,
+        pbPercentile: 48,
+        dividendYield: 1.2,
+        fairValue: '38-50',
+      },
+      capitalFlow: {
+        mainFlow: 28.5,
+        northFlow: 12.3,
+        etfShareChange: 8.5,
+        trend: '流入',
+      },
+      policy: {
+        supportLevel: '强支持',
+        keyPolicies: [
+          { name: '集成电路产业十四五规划', date: '2026-01', impact: '强正面' },
+          { name: '半导体设备税收优惠', date: '2026-05', impact: '正面' },
+        ],
+        notes: '国产替代逻辑持续，政策强力支持',
+      },
+      indicators: {
+        prosperityTrend: true,
+        capitalFlowTrend: true,
+        valuationTrend: false,
+        policyTrend: true,
+        confirmed: false,
+      },
+      triggerConditions: {
+        entry: ['设备订单持续增长', '国产替代率提升', '行业景气度Q3见顶确认'],
+        exit: ['估值泡沫化', '订单增速下滑', '政策转向'],
+      },
+      relatedTargets: [],
+      researchNotes: [
+        { date: '2026-08-22', content: '半导体周期上行趋势确立，设备订单饱满', author: 'AI' },
+        { date: '2026-08-18', content: '国产替代加速，关注设备和EDA环节', author: 'AI' },
+      ],
+      allocationSuggestion: { position: 8, type: '加仓', timing: '可建仓' },
+      isSample: true,
+    }),
+    createIndustryWatch({
+      name: '黄金',
+      code: 'CS0301',
+      category: '一级核心',
+      trend: { current: '上升趋势', direction: '看多', score: 75 },
+      status: '已入场',
+      prosperity: {
+        score: 3,
+        revenueGrowth: 2.5,
+        profitGrowth: 5.2,
+        capacityUtilization: 68,
+        orderVisibility: 60,
+        pmiNewOrders: 48.5,
+        change: '稳定',
+      },
+      valuation: {
+        pe: null,
+        pePercentile: null,
+        pb: null,
+        pbPercentile: null,
+        dividendYield: 0,
+        fairValue: '按金价走势',
+      },
+      capitalFlow: {
+        mainFlow: 22.8,
+        northFlow: 15.2,
+        etfShareChange: 12.5,
+        trend: '流入',
+      },
+      policy: {
+        supportLevel: '支持',
+        keyPolicies: [{ name: '央行持续购金', date: '2026-01', impact: '正面' }],
+        notes: '全球央行购金需求持续，避险属性凸显',
+      },
+      indicators: {
+        prosperityTrend: true,
+        capitalFlowTrend: true,
+        valuationTrend: true,
+        policyTrend: true,
+        confirmed: true,
+      },
+      triggerConditions: {
+        entry: ['美联储降息周期', '地缘政治风险升级', '美元指数走弱'],
+        exit: ['金价突破历史高位后回调', '实际利率大幅上行'],
+      },
+      relatedTargets: [{ targetId: 'T-518880', targetName: '黄金ETF', weight: 5 }],
+      researchNotes: [
+        { date: '2026-08-25', content: '黄金避险需求持续，央行购金支撑长期金价', author: 'AI' },
+      ],
+      allocationSuggestion: { position: 10, type: '底仓', timing: '可建仓' },
+      isSample: true,
+    }),
+    createIndustryWatch({
+      name: '医药生物',
+      code: 'CS0125',
+      category: '二级重点',
+      trend: { current: '拐点待确认', direction: '中性', score: 48 },
+      status: '待观察',
+      prosperity: {
+        score: 2,
+        revenueGrowth: 3.2,
+        profitGrowth: -2.5,
+        capacityUtilization: 62,
+        orderVisibility: 50,
+        pmiNewOrders: 49.5,
+        change: '下行',
+      },
+      valuation: {
+        pe: 32.5,
+        pePercentile: 35,
+        pb: 3.8,
+        pbPercentile: 32,
+        dividendYield: 1.8,
+        fairValue: '28-35',
+      },
+      capitalFlow: {
+        mainFlow: -8.5,
+        northFlow: -3.2,
+        etfShareChange: -2.1,
+        trend: '流出',
+      },
+      policy: {
+        supportLevel: '中性',
+        keyPolicies: [{ name: '医保谈判规则优化', date: '2026-04', impact: '中性' }],
+        notes: '医保控费压力仍存，创新药出海逻辑待验证',
+      },
+      indicators: {
+        prosperityTrend: false,
+        capitalFlowTrend: false,
+        valuationTrend: true,
+        policyTrend: false,
+        confirmed: false,
+      },
+      triggerConditions: {
+        entry: ['创新药出海签约', '医保谈判超预期', '行业估值底部确认'],
+        exit: ['集采扩面', '创新药审批收紧'],
+      },
+      relatedTargets: [],
+      researchNotes: [
+        { date: '2026-08-23', content: '医药行业处于底部区域，等待基本面拐点信号', author: 'AI' },
+      ],
+      allocationSuggestion: { position: 3, type: '观望', timing: '等待信号' },
+      isSample: true,
+    }),
+  ]
+
+  // ---------- 示例：L3 2026-Q3 中长期策略（第十五章 §15.4.1） ----------
+  const strategies = [
+    createStrategy({
+      ym: '2026-Q3',
+      title: '2026Q3 衰退末期·防守反击策略',
+      macroPhase: '衰退末期',
+      macroPhaseConfidence: 65,
+      macroKeyRationale: 'PMI连续两月略高于荣枯线但弱于历史均值；社融企稳；CPI低位；对应衰退末期向复苏过渡。',
+      macroSignalConflicts: '地产投资仍弱，出口压力大，但内需和政策托底在起作用——信号不完全一致，判定为过渡期偏弱的衰退末期。',
+      assetAllocation: {
+        equityRange: { min: 55, max: 70 },
+        bondRange: { min: 20, max: 30 },
+        goldRange: { min: 5, max: 10 },
+        cashRange: { min: 5, max: 15 },
+        equityTone: '中性偏下',
+      },
+      industryFocus: {
+        overweight: [
+          { code: 'CS0101', name: '食品饮料', reason: '必选消费防御属性，政策预期下估值修复' },
+          { code: 'CS0301', name: '黄金', reason: '避险+降息逻辑，衰退末期标配' },
+        ],
+        neutral: [
+          { code: 'CS0111', name: '半导体' },
+          { code: 'CS0125', name: '医药生物' },
+        ],
+        underweight: [
+          { code: 'CS02XX', name: '高估值题材', reason: '衰退末期流动性偏紧' },
+        ],
+      },
+      styleBias: '价值侧重',
+      coreAssumptions: [
+        { id: 'a1', text: 'Q3 PMI不会跌破荣枯线', verified: false },
+        { id: 'a2', text: '食品饮料中报净利润同比≥正', verified: false },
+        { id: 'a3', text: '美联储停止加息、国内不收紧货币政策', verified: false },
+      ],
+      humans: { phaseJudgement: true, industryPriority: false, finalApproval: false },
+      ais: {
+        macroEvidence: '宏观周期Agent输出：PMI/CPI组合位于衰退末期左下象限，置信65%',
+        industryEvidence: '行业景气Agent：食品饮料景气稳定，黄金上行趋势，半导体拐点待确认',
+        allocationSuggestion: '大类配置辅助建议：权益取区间中下部（55-60%），债券25%，黄金8-10%',
+        conflicts: [
+          { agents: '宏观周期 vs 市场情绪', point: '宏观看弱衰退末期，但情绪已反弹较多', reason: '情绪领先基本面' },
+        ],
+      },
+      status: '执行中',
+      createdAt: todayStr,
+      updatedAt: todayStr,
+      isSample: true,
+    }),
+  ]
+
+  // ---------- 示例：L4 2026-08 月度策略（§15.4.2） ----------
+  const monthlyStrategies = [
+    createMonthlyStrategy({
+      ym: '2026-08',
+      title: '8月月度·防御底仓 + 黄金小幅超配',
+      strategyId: strategies[0].id,
+      strategyTitle: strategies[0].title,
+      keyObservations: [
+        { text: 'PMI官方公布', metric: 'PMI', target: '≥49.8', actual: '待公布', passed: false },
+        { text: '食品饮料中报验证', metric: '白酒板块净利润增速', target: '≥5%', actual: '待公布', passed: false },
+      ],
+      rebalancePlan: {
+        equityChange: 0,
+        bondChange: 0,
+        goldChange: 2,
+        cashChange: -2,
+        rationale: '美国通胀回落确认，黄金加2个百分点，对应现金减少。',
+      },
+      industryRebalance: [
+        { industryCode: 'CS0301', industryName: '黄金', action: '加仓', changePct: 2, reason: '降息预期升温' },
+      ],
+      targetActionPlan: [
+        { targetCode: '601088', targetName: '中国神华', targetType: '个股', action: '持有', targetPositionRange: { min: 8, max: 12 }, triggers: ['跌破买入价12%止损'], relatedMemoId: '' },
+        { targetCode: '110022', targetName: '易方达消费行业股票', targetType: '基金', action: '观望', targetPositionRange: { min: 0, max: 5 }, triggers: ['食品饮料中报超预期再建仓'], relatedMemoId: '' },
+      ],
+      createdAt: todayStr,
+      updatedAt: todayStr,
+      isSample: true,
+    }),
+  ]
+
+  // ---------- 示例：L5/L6 评分卡 中国神华（§15.5） ----------
+  const scoreCards = [
+    createScoreCard({
+      targetCode: '601088',
+      targetName: '中国神华',
+      targetType: '个股',
+      strategyId: strategies[0].id,
+      monthlyId: monthlyStrategies[0].id,
+      evaluationDate: todayStr,
+      l1Passed: true,
+      l1Violations: [],
+      winRate: {
+        total: 78,
+        breakdown: {
+          macroMatch: { score: 12, weight: 15, note: '衰退末期红利资产受益+12', agent: '宏观周期Agent' },
+          industryProsperity: { score: 20, weight: 25, note: '红利行业景气稳定+20', agent: '行业景气Agent' },
+          fundamentalQuality: { score: 22, weight: 25, note: 'ROE稳定14%，经营现金流持续为正+22', agent: '财报解读Agent' },
+          complianceRisk: { score: 20, weight: 20, note: '合规通过+20', agent: '合规风控Agent' },
+          sentimentAlignment: { score: 4, weight: 15, note: '估值偏低+4，缺乏催化剂', agent: '市场情绪Agent' },
+        },
+        vetoByCompliance: false,
+        vetoByIndustryDeclineHighBeta: false,
+        grade: '高',
+      },
+      oddRate: {
+        total: 72,
+        breakdown: {
+          valuationAttractiveness: { score: 25, weight: 30, note: 'PE历史分位18%+25', agent: '财报解读Agent' },
+          upsidePotential: { score: 20, weight: 30, note: '股息率6.3%，上行空间稳健+20', agent: '行业景气/技术形态' },
+          downsideProtection: { score: 20, weight: 25, note: '高股息+业绩稳定提供保护+20', agent: '市场情绪' },
+          strategyFit: { score: 7, weight: 15, note: '匹配当期价值侧重风格+7', agent: '协调Agent' },
+        },
+        grade: '中高',
+        rewardRiskRatio: '2.5:1',
+      },
+      attractiveness: 76,
+      humanAdjustment: 0,
+      finalAttractiveness: 76,
+      priorityTier: 'A',
+      positionAdvice: {
+        matrixRange: { min: 8, max: 12 },
+        ruleCap: 15,
+        finalRange: { min: 8, max: 12 },
+        strategyType: '价值',
+        priorityRank: 1,
+        rebalanceTriggers: {
+          addPosition: '回调至PE历史分位<15%加仓至12%',
+          trimPosition: 'PE>历史50分位减至8%以下',
+          takeProfit: '股息率低于4.5%或涨超50%',
+          stopLoss: '核心逻辑破坏（煤价暴跌/政策加税）优先止损；价格-12%兜底',
+        },
+        industryExposures: [{ industry: '资源品（煤炭/红利）', weightPct: 100 }],
+        sameIndustryExposureTotal: 10,
+        industryConcentrationOk: true,
+      },
+      l7Checks: {
+        hasMemo: true,
+        withinTradingPlan: true,
+        noIntradayDecision: true,
+        stopLossDefined: true,
+        l7Passed: true,
+        blockedReasons: [],
+      },
+      agentSources: [
+        { agent: '宏观周期Agent', outputRef: '2026-Q3衰退末期', confidence: 65 },
+        { agent: '行业景气Agent', outputRef: '资源/红利景气稳定', confidence: 80 },
+      ],
+      updatedAt: todayStr,
+      isSample: true,
+    }),
+  ]
+
+  // ---------- 示例：基金代码穿透分析任务（§15.9）：005827易方达蓝筹精选混合 ----------
+  const fundAnalysisJobs = [
+    createFundAnalysisJob({
+      code: '005827',
+      submittedAt: todayStr,
+      submittedBy: '协调Agent',
+      step1: {
+        status: '成功',
+        fullName: '易方达蓝筹精选混合型证券投资基金',
+        fundType: '混合型',
+        fundCompany: '易方达基金管理有限公司',
+        manager: '张坤',
+        managerTenure: 6.5,
+        inceptionDate: '2018-09-05',
+        aum: 420,
+        latestNav: 2.356,
+        equityRatio: 92,
+        dataSource: '东方财富妙想MCP·综合诊基',
+        errorNote: '',
+      },
+      step2: {
+        status: '成功',
+        topHoldings: [
+          { name: '贵州茅台', weight: 9.5, industry: '食品饮料' },
+          { name: '五粮液', weight: 7.8, industry: '食品饮料' },
+          { name: '腾讯控股', weight: 7.2, industry: '互联网/科技' },
+          { name: '泸州老窖', weight: 6.5, industry: '食品饮料' },
+          { name: '洋河股份', weight: 5.8, industry: '食品饮料' },
+        ],
+        industryDistribution: [
+          { industry: '食品饮料（白酒）', weight: 42 },
+          { industry: '互联网/科技', weight: 18 },
+          { industry: '医药', weight: 12 },
+          { industry: '消费服务', weight: 10 },
+          { industry: '其他', weight: 18 },
+        ],
+        styleBox: '大盘价值+品质（集中消费）',
+        primaryIndustry: '食品饮料（白酒）',
+        capabilityCircleMatch: true,
+        capabilityCircleGap: '',
+      },
+      step3: {
+        status: '成功',
+        ytdReturn: 5.2, oneYearReturn: 8.3, threeYearAnnualReturn: -4.8,
+        maxDrawdown: 45.6, sharpeRatio: 0.35, volatility: 22.4,
+        trackingError: 6.2, informationRatio: 0.42,
+        aumCheck: true, // 420亿在20-500之间
+        managerStyleStable: true,
+        styleMatchCapability: true, // 白酒/医药/科技均在能力圈
+        companyComplianceClean: true,
+        vetoHits: ['近3年年化收益为负（4.8%），需要关注但不直接否决；近最大回撤45.6%超过体系25%阈值，需明确标记风险'],
+        vetoPassed: true, // 暂不触发一票否决（经理年限>1，业绩非后20%）
+        finalFundScore: 62,
+      },
+      step4: { status: '待执行', scoreCardId: '', note: '需生成对应L5评分卡（胜率中，赔率中）；最大回撤风险需写进说明' },
+      step5: {
+        status: '待执行',
+        industryExposureCheck: false, // 需人工复核：白酒42%+个股白酒8%=50%>30%上限！
+        totalEquityCheck: true,
+        finalDecision: '待处理',
+        decisionNote: '关键警报：食品饮料敞口42%权重，如果已有白酒个股持仓（≥8%），合计会突破单行业30%上限，需减配白酒或另选行业分散基金',
+      },
+      overallStatus: '待人工复核',
+      isSample: true,
+    }),
+  ]
+
   return {
     principles,
     l1,
@@ -846,8 +1444,14 @@ export function seedData() {
     memos,
     materials,
     logs,
+    funds,
+    industryWatches,
+    strategies,
+    monthlyStrategies,
+    scoreCards,
+    fundAnalysisJobs,
     dashboard,
     analysis: { targets: {}, macro: null }, // 实时分析结果缓存（垂类 Agent 分析输出）
-    version: 'v2.0',
+    version: 'v2.5',
   }
 }

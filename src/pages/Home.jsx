@@ -117,6 +117,10 @@ export default function Home() {
   const targets = useStore((s) => s.targets)
   const trades = useStore((s) => s.trades)
   const memos = useStore((s) => s.memos)
+  const funds = useStore((s) => s.funds) || []
+  const industryWatches = useStore((s) => s.industryWatches) || []
+  const strategies = useStore((s) => s.strategies) || []
+  const scoreCards = useStore((s) => s.scoreCards) || []
   const clearSamples = useStore((s) => s.clearSamples)
 
   const [analyzing, setAnalyzing] = useState(false)
@@ -252,6 +256,10 @@ export default function Home() {
           <KpiCard label="观察池" value={watchlist.length} accent={tokens.ai} />
           <KpiCard label="分析标的" value={Object.keys(analysisTargets).length} accent={tokens.primary} />
           <KpiCard label="本月交易" value={trades.filter((t) => (t.date || '').startsWith(ym)).length} />
+          <KpiCard label="基金池" value={funds.length} accent={tokens.ai} />
+          <KpiCard label="行业观察" value={industryWatches.length} accent={tokens.warn} />
+          <KpiCard label="季度策略" value={strategies.length} accent={tokens.primary} />
+          <KpiCard label="评分卡" value={scoreCards.length} accent={tokens.success || tokens.ai} />
         </Box>
 
         {/* ===== 1. 市场情况展示区 ===== */}

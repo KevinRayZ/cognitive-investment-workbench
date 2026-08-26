@@ -44,18 +44,75 @@ export const muiTheme = createTheme({
         body: {
           backgroundColor: tokens.bgPage,
           color: tokens.ink700,
+          '-webkit-font-smoothing': 'antialiased',
+          '-moz-osx-font-smoothing': 'grayscale',
+        },
+        '*::-webkit-scrollbar': { width: 6, height: 6 },
+        '*::-webkit-scrollbar-track': { background: 'transparent' },
+        '*::-webkit-scrollbar-thumb': {
+          background: tokens.ink400,
+          borderRadius: 3,
+          '&:hover': { background: tokens.ink500 },
         },
       },
     },
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {
-        root: { borderRadius: tokens.radius.sm },
+        root: {
+          borderRadius: tokens.radius.md,
+          textTransform: 'none',
+          fontWeight: 600,
+          transition: `all ${tokens.transition.base}`,
+        },
+        contained: {
+          boxShadow: tokens.shadow.xs,
+          '&:hover': { boxShadow: tokens.shadow.sm, transform: 'translateY(-1px)' },
+        },
+        outlined: {
+          '&:hover': { transform: 'translateY(-1px)' },
+        },
       },
     },
     MuiPaper: {
       styleOverrides: {
-        rounded: { borderRadius: tokens.radius.md },
+        rounded: { borderRadius: tokens.radius.lg },
+      },
+      defaultProps: { elevation: 0 },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: tokens.radius.lg,
+          boxShadow: tokens.shadow.xs,
+          transition: `box-shadow ${tokens.transition.base}, transform ${tokens.transition.base}`,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: { fontWeight: 500 },
+        outlined: { borderWidth: 1 },
+      },
+    },
+    MuiTextField: {
+      defaultProps: { size: 'small' },
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: tokens.radius.md,
+            transition: `all ${tokens.transition.fast}`,
+          },
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          fontSize: 12,
+          borderRadius: tokens.radius.sm,
+          padding: '4px 8px',
+        },
       },
     },
   },

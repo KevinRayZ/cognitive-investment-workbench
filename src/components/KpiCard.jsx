@@ -16,23 +16,46 @@ export default function KpiCard({ label, value, delta, icon, accent }) {
     <Box
       sx={{
         flex: 1,
-        minWidth: 160,
+        minWidth: 150,
         bgcolor: tokens.surface,
         border: `1px solid ${tokens.border}`,
-        borderRadius: tokens.radius.md,
-        boxShadow: '0 1px 3px rgba(15,23,41,.06)',
+        borderRadius: tokens.radius.lg,
+        boxShadow: tokens.shadow.xs,
         p: 2,
+        transition: `all ${tokens.transition.base}`,
+        '&:hover': {
+          boxShadow: tokens.shadow.sm,
+          transform: 'translateY(-2px)',
+          borderColor: accent || tokens.border,
+        },
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': accent ? {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: `linear-gradient(90deg, ${accent}, ${accent}DD)`,
+        } : {},
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <Typography sx={{ fontSize: 12, color: tokens.ink400 }}>{label}</Typography>
-        {icon}
+        <Typography sx={{
+          fontSize: 11,
+          color: tokens.ink400,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        }}>{label}</Typography>
+        <Box sx={{ opacity: 0.6 }}>{icon}</Box>
       </Box>
       <Typography
         sx={{
           fontFamily: '"Roboto Mono", monospace',
           fontVariantNumeric: 'tabular-nums',
-          fontSize: 22,
+          fontSize: 24,
           fontWeight: 700,
           color: accent || tokens.ink900,
           mt: 1,
@@ -49,6 +72,7 @@ export default function KpiCard({ label, value, delta, icon, accent }) {
             fontSize: 12,
             color: delta.dir === 'up' ? tokens.up : tokens.down,
             mt: 0.5,
+            fontWeight: 600,
           }}
         >
           {delta.text}
