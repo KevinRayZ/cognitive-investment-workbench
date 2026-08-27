@@ -20,6 +20,8 @@ import WarningAmber from '@mui/icons-material/WarningAmber'
 import OpenInNew from '@mui/icons-material/OpenInNew'
 import Refresh from '@mui/icons-material/Refresh'
 import AutoGraph from '@mui/icons-material/AutoGraph'
+import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded'
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded'
 
 import tokens from '../theme/tokens'
 import { useStore } from '../store/useStore'
@@ -29,11 +31,57 @@ import StatusPill from '../components/StatusPill'
 import IdBadge from '../components/IdBadge'
 import MerrillClock from '../components/dashboard/MerrillClock'
 import AssetAttractiveness from '../components/dashboard/AssetAttractiveness'
-import { deriveHoldings, checkHealth, HARD_RULES, CLOCK_PHASES, posToPhase, phaseToPos } from '../utils/dashboard'
+import { deriveHoldings, checkHealth, suggestAction, HARD_RULES, CLOCK_PHASES, posToPhase, phaseToPos, FX } from '../utils/dashboard'
 import { fmtCurrency, fmtSignedCurrency, fmtPct } from '../utils/formatters'
 import { runRealtimeAnalysis } from '../lib/analysis'
+import { getHoldingQuotes } from '../lib/quotes'
 
 const CAPABILITY_CIRCLE = ['科技', '消费', '医药', '资源', '红利', '黄金', '债券']
+
+const CUR_SYMBOL = { CNY: '¥', USD: '$', HKD: 'HK$' }
+
+function fmtLivePrice(price, currency) {
+  if (!Number.isFinite(Number(price))) return '—'
+  const sym = CUR_SYMBOL[currency] || ''
+  const digits = Number(price) >= 100 ? 2 : 4
+  return `${sym}${Number(price).toFixed(digits)}`
+}
+
+/** 涨跌幅徽标（涨红跌绿，中国市场惯例）。 */
+function DeltaBadge({ pct }) {
+  if (!Number.isFinite(Number(pct))) return null
+  const up = Number(pct) >= 0
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex', alignItems: 'center', gap: 0.25,
+        px: 0.6, py: 0.15, borderRadius: 1,
+        fontSize: 11, fontWeight: 700, fontFamily: '"Roboto Mono", monospace',
+        bgcolor: up ? 'rgba(229,72,77,.10)' : 'rgba(14,165,136,.12)',
+        color: up ? tokens.up : tokens.down,
+      }}
+    >
+      {up ? <TrendingUpRounded sx={{ fontSize: 13 }} /> : <TrendingDownRounded sx={{ fontSize: 13 }} />}
+      {up ? '+' : ''}{Number(pct).toFixed(2)}%
+    </Box>
+  )
+}
+
+/** 方向建议色块（up=红/机会，hold=蓝/中性，warn=黄/纪律提醒，error=深红/规避）。 */
+function ActionChip({ label, tone }) {
+  const styles = {
+    up: { bgcolor: 'rgba(229,72,77,.10)', color: tokens.up },
+    hold: { bgcolor: tokens.primarySoft || 'rgba(47,84,235,.10)', color: tokens.primary },
+    warn: { bgcolor: tokens.warnSoft || 'rgba(245,165,36,.14)', color: '#9A6700' },
+    error: { bgcolor: 'rgba(229,72,77,.16)', color: tokens.up },
+  }
+  return (
+    <Box component="span" sx={{ px: 0.9, py: 0.25, borderRadius: 999, fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap', ...styles[tone] }}>
+      {label}
+    </Box>
+  )
+}
 
 function todayYm() {
   return new Date().toISOString().slice(0, 7)
@@ -121,9 +169,14 @@ export default function Home() {
   const industryWatches = useStore((s) => s.industryWatches) || []
   const strategies = useStore((s) => s.strategies) || []
   const scoreCards = useStore((s) => s.scoreCards) || []
-  const clearSamples = useStore((s) => s.clearSamples)
+  const liveShares = useStore((s) => s.liveShares)
+  const setLiveSharesBulk = useStore((s) => s.setLiveSharesBulk)
 
   const [analyzing, setAnalyzing] = useState(false)
+  const [liveQuotes, setLiveQuotes] = useState({})
+  const [quotesState, setQuotesState] = useState('idle') // idle | loading | ok | fail
+  const [quotesAt, setQuotesAt] = useState(null)
+  const pendingShares = useRef({})
   const bootRef = useRef(false)
 
   const syncPush = async () => {
@@ -184,15 +237,60 @@ export default function Home() {
   const strategy = monthlyStrategy || { ym: todayYm(), content: '' }
   const macro = analysis?.macro
 
-  const handleClear = () => {
-    if (window.confirm('确定清空全部示例数据？仅删除 isSample 标记的记录，你的新增内容将保留。')) clearSamples()
+  // ===== 实时行情：持仓标的每日自动刷新（首屏 + 每 5 分钟），市值随行情动态折算 =====
+  const openCodes = (() => {
+    const tmap = Object.fromEntries((targets || []).map((t) => [t.id, t]))
+    return [...new Set(trades.filter((t) => t.status !== '已平仓' && t.targetId).map((t) => (tmap[t.targetId] || {}).code).filter((c) => c && !/^cash$/i.test(c)))]
+  })()
+
+  const loadQuotes = async () => {
+    if (!openCodes.length) return
+    try {
+      setQuotesState('loading')
+      const qs = await getHoldingQuotes(openCodes)
+      setLiveQuotes(qs)
+      setQuotesAt(Date.now())
+      setQuotesState(Object.values(qs).some((q) => q && q.price) ? 'ok' : 'fail')
+    } catch (e) {
+      console.warn('[quotes] load failed', e)
+      setQuotesState('fail')
+    }
   }
 
-  // 持仓衍生 + 健康检查
-  const { holdings, totalCNY } = deriveHoldings(trades, targets)
+  // 首次抓取 + 5 分钟轮询（收盘后行情不变，缓存命中成本低）
+  useEffect(() => {
+    let alive = true
+    const run = () => { if (alive) loadQuotes() }
+    run()
+    const timer = setInterval(run, 5 * 60 * 1000)
+    return () => { alive = false; clearInterval(timer) }
+  }, [openCodes.join(',')])
+
+  // 首次行情到达后，把「用户给定市值 ÷ 行情价」推导出的份额写入持久化缓存
+  useEffect(() => {
+    if (Object.keys(pendingShares.current).length) {
+      const patch = pendingShares.current
+      pendingShares.current = {}
+      setLiveSharesBulk(patch)
+    }
+  }, [liveQuotes, setLiveSharesBulk])
+
+  // 持仓衍生（含实时价）+ 健康检查
+  const { holdings, totalCNY } = deriveHoldings(trades, targets, {
+    quotes: liveQuotes,
+    sharesMap: liveShares,
+    onShares: (key, shares) => { pendingShares.current[key] = shares },
+  })
   const health = checkHealth(holdings)
   const heldTargetIds = new Set(trades.filter((t) => t.status !== '已平仓' && t.targetId).map((t) => t.targetId))
   const watchlist = targets.filter((t) => !heldTargetIds.has(t.id))
+  const liveCount = holdings.filter((h) => h.liveQuote).length
+  // 组合今日估算变动（有涨跌幅数据的持仓按价格比例回推）
+  const dayDeltaCNY = holdings.reduce((sum, h) => {
+    if (!Number.isFinite(Number(h.changePct))) return sum
+    return sum + h.valueCNY - h.valueCNY / (1 + Number(h.changePct) / 100)
+  }, 0)
+  const dayDeltaPct = totalCNY > dayDeltaCNY ? (dayDeltaCNY / (totalCNY - dayDeltaCNY)) * 100 : null
 
   const onClockPos = (pos) =>
     updateDashboard({
@@ -226,9 +324,6 @@ export default function Home() {
             >
               {analyzing ? '分析中' : '刷新实时分析'}
             </Button>
-            <Button variant="outlined" color="inherit" startIcon={<Trash />} onClick={handleClear} sx={{ color: tokens.ink500, borderColor: tokens.border }}>
-              清空示例
-            </Button>
           </Box>
         }
       />
@@ -252,6 +347,38 @@ export default function Home() {
 
         {/* KPI 条 */}
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {/* 组合总市值 + 今日变动（实时行情动态折算） */}
+          <Box sx={{
+            flex: { xs: '1 1 100%', md: '1 1 340px' },
+            p: 2.5,
+            borderRadius: tokens.radius.md,
+            color: '#fff',
+            background: tokens.primaryGradient || tokens.primary,
+            boxShadow: '0 6px 20px rgba(47,84,235,.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography sx={{ fontSize: 12.5, fontWeight: 600, opacity: 0.85 }}>组合折算总市值</Typography>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, fontSize: 11, opacity: 0.9 }}>
+                <Box component="span" sx={{ width: 7, height: 7, borderRadius: 2, bgcolor: quotesState === 'loading' ? '#FFD666' : quotesState === 'ok' ? '#69DB7C' : quotesState === 'fail' ? '#FF8787' : '#ddd', flexShrink: 0 }} />
+                {quotesState === 'loading' ? '行情更新中' : quotesState === 'ok' ? '实时行情已接入' : quotesState === 'fail' ? '行情获取失败·按录入市值展示' : '等待行情'}
+                {quotesAt && quotesState === 'ok' && (
+                  <Typography component="span" sx={{ fontSize: 10.5, ml: 0.5, opacity: 0.8 }}>{new Date(quotesAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} 更新</Typography>
+                )}
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap' }}>
+              <Typography sx={{ fontSize: 30, fontWeight: 800, fontFamily: '"Roboto Mono", monospace', lineHeight: 1.15 }}>{fmtCurrency(totalCNY, 'CNY')}</Typography>
+              {Number.isFinite(Number(dayDeltaPct)) && Math.abs(dayDeltaCNY) > 0.5 && (
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, borderRadius: 999, fontSize: 12.5, fontWeight: 800, bgcolor: 'rgba(255,255,255,.18)', fontFamily: '"Roboto Mono", monospace' }}>
+                  {dayDeltaCNY >= 0 ? '+' : ''}{fmtCurrency(dayDeltaCNY, 'CNY')}（{dayDeltaPct >= 0 ? '+' : ''}{dayDeltaPct.toFixed(2)}%）
+                </Box>
+              )}
+            </Box>
+            <Typography sx={{ fontSize: 11.5, opacity: 0.75 }}>现金 + 场内/场外基金 + 美股（USD≈{FX.USD} 折算）· {liveCount}/{holdings.length} 标的接入实时价</Typography>
+          </Box>
           <KpiCard label="当前持仓" value={holdings.length} />
           <KpiCard label="观察池" value={watchlist.length} accent={tokens.ai} />
           <KpiCard label="分析标的" value={Object.keys(analysisTargets).length} accent={tokens.primary} />
@@ -369,15 +496,26 @@ export default function Home() {
           </Card>
         </Box>
 
-        {/* ===== 4. 持仓监控 + 健康检查 ===== */}
+        {/* ===== 1. 持仓监控 + 健康检查（实时行情动态折算） ===== */}
         <Box>
-          <SectionTitle desc="当前持仓市值 / 权重（跨币种近似折算）+ 对照《总纲》硬约束 + 垂类 Agent 合规研判">持仓监控面板 · 健康检查</SectionTitle>
+          <SectionTitle
+            desc="当前持仓市值 / 权重 · 实时价格与涨跌 · 对照《总纲》硬约束"
+            action={
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                {quotesState === 'loading' && <><CircularProgress size={13} /><Typography sx={{ fontSize: 11, color: tokens.ink400 }}>行情更新中…</Typography></>}
+                {quotesState === 'ok' && quotesAt && <Typography sx={{ fontSize: 11, color: tokens.ink400 }}>{liveCount}/{holdings.length} 标的实时 · {new Date(quotesAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</Typography>}
+                {quotesState === 'fail' && <Typography sx={{ fontSize: 11, color: tokens.warn }}>行情接口暂不可用，显示录入市值</Typography>}
+              </Box>
+            }
+          >
+            持仓监控面板 · 健康检查
+          </SectionTitle>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card sx={{ overflowX: 'auto' }}>
               <Table>
                 <TableHead>
                   <TableRow sx={{ bgcolor: tokens.bgPage }}>
-                    {['标的', '方向', '权重', '市值(≈折算)', '浮动盈亏', 'AI 合规', '状态'].map((h) => (
+                    {['标的', '方向建议', '现价 · 涨跌', '权重', '市值(≈折算)', '浮动盈亏', 'AI 合规', '状态'].map((h) => (
                       <TableCell key={h} sx={{ fontSize: 12.5, fontWeight: 700, color: tokens.ink700, whiteSpace: 'nowrap' }}>{h}</TableCell>
                     ))}
                   </TableRow>
@@ -386,16 +524,23 @@ export default function Home() {
                   {holdings.map((h) => {
                     const a = h.code ? analysisTargets[h.code] : null
                     const blocked = a ? isBlocked(a.compliance) : false
+                    const suggest = suggestAction(h, { attractiveness: a?.attractiveness, blocked })
+                    const displayName = h.liveName || h.name
                     return (
-                      <TableRow key={h.id} sx={{ '& td': { fontSize: 13, color: tokens.ink700, py: 1.1, whiteSpace: 'nowrap' } }}>
+                      <TableRow key={h.id} sx={{ '& td': { fontSize: 13, color: tokens.ink700, py: 1.1, whiteSpace: 'nowrap' }, '&:hover': { bgcolor: tokens.bgPage }, transition: `background ${tokens.transition?.fast || '.15s'}` }}>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                            <span style={{ fontWeight: 600 }}>{h.name}</span>
+                            <span style={{ fontWeight: 600 }}>{displayName}</span>
                             {h.code && <span style={{ fontSize: 11, color: tokens.ink400, fontFamily: '"Roboto Mono", monospace' }}>{h.code}</span>}
                           </Box>
                         </TableCell>
+                        <TableCell><ActionChip label={suggest.label} tone={suggest.tone} /></TableCell>
                         <TableCell>
-                          <Typography component="span" sx={{ color: h.direction === '做多' ? tokens.up : tokens.down, fontWeight: 600 }}>{h.direction}</Typography>
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+                            <span style={{ fontFamily: '"Roboto Mono", monospace', fontWeight: 600 }}>{h.liveQuote ? fmtLivePrice(h.price, h.currency) : '—'}</span>
+                            {Number.isFinite(Number(h.changePct)) && <DeltaBadge pct={h.changePct} />}
+                            {!h.liveQuote && h.code && <span style={{ fontSize: 10.5, color: tokens.ink400 }}>待行情</span>}
+                          </Box>
                         </TableCell>
                         <TableCell sx={{ fontFamily: '"Roboto Mono", monospace', fontWeight: 700 }}>{h.weight.toFixed(1)}%</TableCell>
                         <TableCell sx={{ fontFamily: '"Roboto Mono", monospace' }}>{fmtCurrency(h.valueCNY, 'CNY')}</TableCell>
@@ -414,13 +559,13 @@ export default function Home() {
                     )
                   })}
                   {holdings.length === 0 && (
-                    <TableRow><TableCell colSpan={7} sx={{ textAlign: 'center', color: tokens.ink400, py: 3 }}>暂无持仓（未平仓交易为空）。</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} sx={{ textAlign: 'center', color: tokens.ink400, py: 3 }}>暂无持仓（未平仓交易为空）。</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
               {holdings.length > 0 && (
                 <Typography sx={{ fontSize: 11.5, color: tokens.ink400, mt: 1 }}>
-                  组合折算市值合计 ≈ {fmtCurrency(totalCNY, 'CNY')}（USD≈7.23 / HKD≈0.92 近似折算，仅用于权重估算）。AI 合规列来自垂类 Agent 实时分析。
+                  组合折算市值合计 ≈ {fmtCurrency(totalCNY, 'CNY')}（USD≈{FX.USD} / HKD≈{FX.HKD} 近似折算）。份额按「录入市值 ÷ 首次行情价」锁定，此后市值随行情自动浮动，每 5 分钟刷新；现金不计行情。方向建议结合权重纪律与 AI 吸引力生成。
                 </Typography>
               )}
             </Card>
@@ -455,7 +600,7 @@ export default function Home() {
           </Box>
         </Box>
 
-        {/* ===== 5. 观察池 ===== */}
+        {/* ===== 4. 观察池 ===== */}
         <Box>
           <SectionTitle desc="已列入研究、尚未建仓的标的（AI 吸引力 / 逻辑 / 合规来自垂类 Agent 实时分析）" action={<Button size="small" endIcon={<ArrowForward />} onClick={() => navigate('/research')} sx={{ color: tokens.primary }}>研究库</Button>}>
             观察池（{watchlist.length}）

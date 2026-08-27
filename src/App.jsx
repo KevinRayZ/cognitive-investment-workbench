@@ -4,7 +4,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import TopBar from './layout/TopBar'
 import Sidebar from './layout/Sidebar'
-import DisclaimerBar from './layout/DisclaimerBar'
+// 底部「人类最终负责」声明条已按用户要求移除（规则本身仍保留在《总纲》原则中）
 import { useStore } from './store/useStore'
 import { pullAll, pushEntity } from './lib/sync'
 import { getGithubToken } from './lib/credentials'
@@ -76,7 +76,6 @@ export default function App() {
           <Box sx={{ flex: 1, overflowY: 'auto' }}>
             <Outlet />
           </Box>
-          <DisclaimerBar />
         </Box>
       </Box>
 

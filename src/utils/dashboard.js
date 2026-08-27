@@ -91,20 +91,24 @@ export function phaseToPos(phase) {
 
 /**
  * 从交易记录衍生当前持仓（未平仓 = 持有），按标的聚合。
+ * @param {Array} trades
+ * @param {Array} targets
+ * @param {object} [opts]
+ *   - quotes: { [code]: {price, name?, changePct?} } 实时行情快照（CASH 无行情，走静态路径）
+ *   - sharesMap: { [key]: shares } 已缓存的实时份额（按最新价折算市值用）
+ *   - onShares: (key, shares) => void 首次由静态市值推导出份额时回调（用于持久化）
+ *   - cashKeys: 现金类 targetId 列表外的代码可带行情；现金始终静态
  * @returns {{holdings:Array, totalCNY:number}}
  */
-export function deriveHoldings(trades = [], targets = []) {
+export function deriveHoldings(trades = [], targets = [], opts = {}) {
+  const { quotes = {}, sharesMap = {}, onShares } = opts
   const open = trades.filter((t) => t.status !== '已平仓')
   const targetMap = Object.fromEntries((targets || []).map((t) => [t.id, t]))
   const groups = {}
   for (const t of open) {
     const tg = t.targetId ? targetMap[t.targetId] : null
     const key = t.targetId || t.targetName || t.id
-    const price = tg?.keyFinancials?.currentPrice ?? t.price
-    const fx = FX[t.currency] || 1
-    const valueLocal = Number(price || 0) * Number(t.quantity || 0)
-    const valueCNY = valueLocal * fx
-    const costCNY = Number(t.amount || 0) * fx
+    const staticPrice = tg?.keyFinancials?.currentPrice ?? t.price
     if (!groups[key]) {
       groups[key] = {
         id: t.id,
@@ -115,28 +119,79 @@ export function deriveHoldings(trades = [], targets = []) {
         currency: t.currency,
         targetId: t.targetId,
         quantity: 0,
-        price,
+        price: staticPrice,
         valueCNY: 0,
         costCNY: 0,
         pnlCNY: 0,
         isOutOfBoundary: false,
+        liveQuote: null,
+        shares: 0,
       }
     }
     const g = groups[key]
     g.quantity += Number(t.quantity || 0)
-    g.valueCNY += valueCNY
-    g.costCNY += costCNY
-    g.pnlCNY += valueCNY - costCNY
+    const fx = FX[t.currency] || 1
+    g.costCNY += Number(t.amount || 0) * fx
+    // 未启用实时价时的静态市值
+    g.valueCNY += Number(staticPrice || 0) * Number(t.quantity || 0) * fx
     if (t.isOutOfBoundary) g.isOutOfBoundary = true
-    // 若后续有更新的 target 价格，以最新价格为准
     if (tg?.keyFinancials?.currentPrice) g.price = tg.keyFinancials.currentPrice
   }
+
   const rows = Object.values(groups)
+
+  // 实时行情 → 动态折算：首次以「用户给定市值 ÷ 当前价」锁定份额，此后市值随价格浮动
+  for (const r of rows) {
+    const q = r.code ? quotes[r.code] : null
+    const price = q && Number.isFinite(Number(q.price)) && Number(q.price) > 0 ? Number(q.price) : null
+    const isCash = !r.code || /^cash$/i.test(r.code)
+    if (!isCash && price) {
+      let shares = Number(sharesMap[r.targetId || r.code])
+      if (!Number.isFinite(shares) || shares <= 0) {
+        // 用静态基准值换算份额（本地币种）
+        const baseLocal = r.valueCNY / (FX[r.currency] || 1)
+        shares = baseLocal / price
+        if (Number.isFinite(shares) && shares > 0 && onShares) {
+          try { onShares(r.targetId || r.code, shares) } catch (_) {}
+        }
+      }
+      r.shares = shares
+      r.liveQuote = q
+      r.price = price
+      r.liveName = q.name || ''
+      r.changePct = Number.isFinite(Number(q.changePct)) ? Number(q.changePct) : null
+      r.valueCNY = shares * price * (FX[r.currency] || 1)
+    } else {
+      r.shares = r.quantity // 静态路径：quantity 即仓位表示
+    }
+    r.pnlCNY = r.valueCNY - r.costCNY
+  }
+
   const totalCNY = rows.reduce((s, r) => s + r.valueCNY, 0) || 1
   rows.forEach((r) => {
     r.weight = (r.valueCNY / totalCNY) * 100
   })
   return { holdings: rows, totalCNY }
+}
+
+/**
+ * 方向建议：结合权重纪律、AI 吸引力评分、边界外标记给出针对性方向。
+ * @param {{weight:number,isOutOfBoundary:boolean,name:string}} h
+ * @param {{attractiveness?:number, blocked?:boolean}} [ai]
+ * @returns {{label:string, tone:'up'|'hold'|'warn'|'error'}}
+ */
+export function suggestAction(h, ai = {}) {
+  if (h.isOutOfBoundary) return { label: '人工复核', tone: 'warn' }
+  if (ai.blocked) return { label: '合规规避', tone: 'error' }
+  if (h.weight > 20) return { label: '减持·超上限', tone: 'warn' }
+  if (h.weight > 15) return { label: '控制集中度', tone: 'warn' }
+  const a = ai.attractiveness
+  if (typeof a === 'number') {
+    if (a >= 66) return { label: '逢低增持', tone: 'up' }
+    if (a >= 40) return { label: '持有', tone: 'hold' }
+    return { label: '观望·吸引力低', tone: 'warn' }
+  }
+  return { label: '持有', tone: 'hold' }
 }
 
 /**

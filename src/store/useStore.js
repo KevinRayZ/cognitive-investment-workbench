@@ -82,6 +82,21 @@ function migrateV9(persisted) {
   return migrateV8(persisted)
 }
 
+// v9 → v10：全面切换至「无示例数据」模式——
+// 种子已删除全部示例记录（示例复盘/评分卡/基金分析任务），MU 市值修正为 1466 美元，
+// 总纲原则/方法不再标记 isSample。全量实体数组以最新种子重置，并清空实时份额缓存。
+function migrateV10(persisted) {
+  const fresh = seedData()
+  const merged = {}
+  for (const key of Object.keys(fresh)) {
+    merged[key] = Array.isArray(fresh[key]) ? fresh[key] : persisted?.[key] ?? fresh[key]
+  }
+  // 非数组键（如 dashboard）沿用旧迁移链保留用户编辑
+  merged.dashboard = migrateV9(persisted)?.dashboard || merged.dashboard
+  merged.liveShares = {}
+  return merged
+}
+
 // 实体 → 数组键 / 业务编号类型 映射
 const ENTITY_META = {
   principles: { key: 'principles', idType: 'IS', idField: 'id' },
@@ -110,6 +125,8 @@ export const useStore = create(
   persist(
     (set, get) => ({
       ...initial,
+      // 实时持仓份额缓存（key=targetId）：由首次行情价与用户给定市值推导
+      liveShares: {},
 
       /** 通用创建：自动生成业务编号（IS/ERR/M/MEMO）。 */
       create: (entity, payload = {}) => {
@@ -192,6 +209,10 @@ export const useStore = create(
       setAnalysisTarget: (code, r) =>
         set({ analysis: { ...get().analysis, targets: { ...get().analysis.targets, [code]: r } } }),
       setAnalysisMacro: (m) => set({ analysis: { ...get().analysis, macro: m } }),
+
+      /** 实时持仓份额缓存：key=targetId，value=份额（由用户给定市值÷首次行情价锁定）。 */
+      setLiveShare: (key, shares) => set({ liveShares: { ...get().liveShares, [key]: shares } }),
+      setLiveSharesBulk: (obj) => set({ liveShares: { ...get().liveShares, ...obj } }),
 
       /** 便捷：错误库（reviews 中 type=错误清单）。 */
       getErrors: () => get().reviews.filter((r) => r.type === '错误清单'),
@@ -376,8 +397,8 @@ export const useStore = create(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 9,
-      migrate: migrateV9,
+      version: 10,
+      migrate: migrateV10,
     },
   ),
 )

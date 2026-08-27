@@ -1,30 +1,25 @@
 /**
- * 预置种子 / 示例数据（冷启动注入）。
- * 所有示例记录带 isSample:true，首页「清空示例」按钮调用 store.clearSamples() 仅删除这些记录。
- *
- * 内容准则：《个人投资体系总纲-人机共创融合版》（2026-08-21 版）
- * - 5 条核心底层信念（永久不变）→ 原则卡片 IS-2026-001~005
+ * 预置种子 / 冷启动注入数据。
+ * 数据准则（2026-08-26 起）：不再包含示例数据，直接以用户真实持仓与《个人投资体系总纲》内容工作。
+ * - 5 条核心底层信念 → 原则卡片 IS-2026-001~005
  * - 六大融合策略（分场景、带边界红线）→ 方法 M-2026-001~006
  * - 能力圈：科技 / 消费 / 医药 / 资源 / 红利 / 黄金 / 债券
  * - 个人硬约束：资金周期 2 年；最大回撤 ≤ 30%；中线+长线持仓；日均研究 0.5-1h
+ * - 真实持仓：现金12万 + 10只场内/场外基金 + 5只美股；关注方向：电网ETF
  */
 import {
   createIS,
   createMethod,
   createTarget,
   createTrade,
-  createReview,
   createObservation,
   createL1,
-  createMaterial,
   createChangeLog,
   createMemo,
   createFund,
   createIndustryWatch,
   createStrategy,
   createMonthlyStrategy,
-  createScoreCard,
-  createFundAnalysisJob,
 } from '../models/schemas'
 
 export function seedData() {
@@ -45,7 +40,7 @@ export function seedData() {
       isConstitution: true,
       createdAt: '2026-08-21',
       updatedAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
     createIS({
       id: 'IS-2026-002',
@@ -62,7 +57,7 @@ export function seedData() {
       isConstitution: true,
       createdAt: '2026-08-21',
       updatedAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
     createIS({
       id: 'IS-2026-003',
@@ -79,7 +74,7 @@ export function seedData() {
       isConstitution: true,
       createdAt: '2026-08-21',
       updatedAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
     createIS({
       id: 'IS-2026-004',
@@ -96,7 +91,7 @@ export function seedData() {
       isConstitution: false,
       createdAt: '2026-08-21',
       updatedAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
     createIS({
       id: 'IS-2026-005',
@@ -113,7 +108,7 @@ export function seedData() {
       isConstitution: false,
       createdAt: '2026-08-21',
       updatedAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
   ]
 
@@ -127,7 +122,7 @@ export function seedData() {
       boundary: '任何可能导致本金永久性损失的操作（加杠杆、押注超长周期价值回归）。',
       reason: '复利非线性：大幅回撤的修复时间远大于下跌时长，永久性亏损无法用时间抹平。',
       sourceIsId: 'IS-2026-001',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-002',
@@ -137,7 +132,7 @@ export function seedData() {
       boundary: '纯价格博弈、题材炒作、无基本面支撑的趋势追高。',
       reason: '价格围绕价值波动，安全边际可覆盖认知误差。',
       sourceIsId: 'IS-2026-003',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-003',
@@ -147,7 +142,7 @@ export function seedData() {
       boundary: '频繁交易、追涨杀跌、参与大众共识最狂热的方向。',
       reason: '频繁交易侵蚀收益，共识最拥挤处赔率最差。',
       sourceIsId: 'IS-2026-004',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-004',
@@ -157,7 +152,7 @@ export function seedData() {
       boundary: '不做月度级高频轮动、不用于个股择时。',
       reason: '不同周期阶段大类资产相对收益显著不同，配置可降低单一资产系统性风险。',
       sourceIsId: 'IS-2026-005',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-005',
@@ -167,7 +162,7 @@ export function seedData() {
       boundary: '能力圈（科技/消费/医药/资源/红利/黄金/债券）之外的陌生行业与复杂衍生品。',
       reason: '认知缺口是亏损的主要来源，不懂不做是成熟投资者的核心原则。',
       sourceIsId: 'IS-2026-002',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-006',
@@ -177,7 +172,7 @@ export function seedData() {
       boundary: '杠杆头寸、3 年以上才可能兑现的逻辑。',
       reason: '杠杆会剥夺时间这个朋友；价值回归周期不可控，可能超出资金使用期限。',
       sourceIsId: 'IS-2026-001',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-007',
@@ -187,7 +182,7 @@ export function seedData() {
       boundary: '震荡市中的假突破、高位鱼尾行情、情绪快速轮动题材。',
       reason: '纯技术趋势无基本面支撑时极易失效，题材炒作违背认知差原则。',
       sourceIsId: 'IS-2026-004',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-008',
@@ -197,7 +192,7 @@ export function seedData() {
       boundary: '任何导致回撤突破 30% 的加仓或风险暴露。',
       reason: '30% 回撤是个人可承受边界，风控规则为体系最高优先级。',
       sourceIsId: 'IS-2026-001',
-      isSample: true,
+      isSample: false,
     }),
     createL1({
       id: 'L1-2026-009',
@@ -207,7 +202,7 @@ export function seedData() {
       boundary: '单一标的或行业集中度过高、逆向仓超出试错成本上限。',
       reason: '分散非系统性风险，防止黑天鹅对组合造成致命打击；逆向只做机动试错。',
       sourceIsId: 'IS-2026-001',
-      isSample: true,
+      isSample: false,
     }),
   ]
 
@@ -229,7 +224,7 @@ export function seedData() {
       status: '启用',
       relatedIsIds: ['IS-2026-005'],
       version: 'v1.0',
-      isSample: true,
+      isSample: false,
     }),
     createMethod({
       id: 'M-2026-002',
@@ -246,7 +241,7 @@ export function seedData() {
       status: '启用',
       relatedIsIds: ['IS-2026-001', 'IS-2026-003'],
       version: 'v1.0',
-      isSample: true,
+      isSample: false,
     }),
     createMethod({
       id: 'M-2026-003',
@@ -264,7 +259,7 @@ export function seedData() {
       status: '启用',
       relatedIsIds: ['IS-2026-003', 'IS-2026-004'],
       version: 'v1.0',
-      isSample: true,
+      isSample: false,
     }),
     createMethod({
       id: 'M-2026-004',
@@ -282,7 +277,7 @@ export function seedData() {
       status: '启用',
       relatedIsIds: ['IS-2026-003', 'IS-2026-004'],
       version: 'v1.0',
-      isSample: true,
+      isSample: false,
     }),
     createMethod({
       id: 'M-2026-005',
@@ -300,7 +295,7 @@ export function seedData() {
       status: '待验证',
       relatedIsIds: ['IS-2026-004'],
       version: 'v1.0',
-      isSample: true,
+      isSample: false,
     }),
     createMethod({
       id: 'M-2026-006',
@@ -318,7 +313,7 @@ export function seedData() {
       status: '启用',
       relatedIsIds: ['IS-2026-001'],
       version: 'v1.0',
-      isSample: true,
+      isSample: false,
     }),
   ]
 
@@ -813,9 +808,9 @@ export function seedData() {
       targetName: 'MU（美光科技）',
       direction: '做多',
       quantity: 1,
-      price: 7395,
+      price: 1466,
       currency: 'USD',
-      amount: 7395,
+      amount: 1466,
       industry: '半导体',
       memoId: '',
       status: '已归档',
@@ -872,120 +867,11 @@ export function seedData() {
     }),
   ]
 
-  // ---------- L5 复盘与错误 ----------
-  const reviews = [
-    createReview({
-      id: 'RV-001',
-      type: '错误清单',
-      errId: 'ERR-2026-001',
-      category: '认知',
-      title: '追高忽略估值',
-      description: '在估值分位 > 80% 时仍因情绪追高买入，违背「价格是情绪，价值是锚点」，后续回撤显著。',
-      relatedIsIds: ['IS-2026-003'],
-      relatedTradeIds: [],
-      reviewRecords: [
-        { date: '2026-03-15', content: '首次在热门赛道高位追入', result: '短期浮亏 12%' },
-        { date: '2026-05-20', content: '复盘确认是估值纪律缺失', result: '补充安全边际规则' },
-        { date: '2026-08-01', content: '蜜雪建仓严格按分位执行', result: '未再犯，浮盈' },
-      ],
-      status: '已验证',
-      isSample: true,
-    }),
-    createReview({
-      id: 'RV-002',
-      type: '错误清单',
-      errId: 'ERR-2026-002',
-      category: '心态',
-      title: '止损犹豫',
-      description: '亏损仓位因侥幸心理拖延止损，小亏拖成大亏，违背「风险优先，生存第一」。',
-      relatedIsIds: ['IS-2026-001'],
-      relatedTradeIds: [],
-      reviewRecords: [{ date: '2026-04-10', content: '记录一次拖延止损案例', result: '待改进' }],
-      status: '待验证',
-      isSample: true,
-    }),
-    createReview({
-      id: 'RV-003',
-      type: '错误清单',
-      errId: 'ERR-2026-003',
-      category: '认知',
-      title: '轻信小道消息',
-      description: '依据未经证实的群聊消息买入，缺乏独立验证，违背「不懂不做，严守能力圈」。',
-      relatedIsIds: ['IS-2026-002'],
-      relatedTradeIds: [],
-      reviewRecords: [{ date: '2026-02-28', content: '因消息买入后证伪', result: '小额止损' }],
-      status: '已验证',
-      isSample: true,
-    }),
-    createReview({
-      id: 'RV-004',
-      type: '错误清单',
-      errId: 'ERR-2026-004',
-      category: '执行',
-      title: '仓位过重',
-      description: '单票一度超过 20% 上限，行业集中度过高，波动放大，触发防御风控三层约束。',
-      relatedIsIds: ['IS-2026-001'],
-      relatedTradeIds: [],
-      reviewRecords: [{ date: '2026-06-12', content: '触发硬规则预警', result: '已减仓至合规' }],
-      status: '已验证',
-      isSample: true,
-    }),
-    createReview({
-      id: 'RV-005',
-      type: '错误清单',
-      errId: 'ERR-2026-005',
-      category: '心态',
-      title: '频繁交易',
-      description: '过度交易侵蚀收益，增加摩擦成本与决策噪音，违背「超额收益来自认知差与逆向性」。',
-      relatedIsIds: ['IS-2026-004'],
-      relatedTradeIds: [],
-      reviewRecords: [{ date: '2026-07-05', content: '统计月度换手率偏高', result: '设交易频率上限' }],
-      status: '待验证',
-      isSample: true,
-    }),
-    createReview({
-      id: 'RV-006',
-      type: '错误清单',
-      errId: 'ERR-2026-006',
-      category: '认知',
-      title: '忽略宏观周期',
-      description: '只看个股忽略利率与流动性宏观背景，择时被动，违背「周期轮回，资产轮动」。',
-      relatedIsIds: ['IS-2026-005'],
-      relatedTradeIds: [],
-      reviewRecords: [{ date: '2026-08-02', content: '纳入宏观周期 Checklist', result: '待验证' }],
-      status: '待验证',
-      isSample: true,
-    }),
-    ]
+  // ---------- L5 复盘与错误（示例已清除，按用户真实记录填写） ----------
+  const reviews = []
 
-  // ---------- L6 观察灵感 ----------
+  // ---------- L6 观察灵感（仅保留用户真实灵感） ----------
   const observations = [
-    createObservation({
-      id: 'OB-004',
-      title: '宏观周期观察：当前处于什么阶段？',
-      source: '宏观数据',
-      sourceType: '研报',
-      summary: '待判断当前周期（复苏/过热/滞胀/衰退）与流动性环境，作为大类资产配置的顶层输入。',
-      status: '待归档',
-      relatedTargetIds: [],
-      relatedMethodIds: ['M-2026-001'],
-      relatedErrIds: ['ERR-2026-006'],
-      createdAt: '2026-08-16',
-      isSample: true,
-    }),
-    createObservation({
-      id: 'OB-005',
-      title: '用估值分位做仓位梯度',
-      source: '自我灵感',
-      sourceType: '灵感',
-      summary: '分位越低买得越重，分位越高买得越轻，将安全边际转化为仓位函数（价值策略落地）。',
-      status: '已归档',
-      relatedTargetIds: [],
-      relatedMethodIds: ['M-2026-002'],
-      relatedErrIds: [],
-      createdAt: '2026-08-10',
-      isSample: true,
-    }),
     createObservation({
       id: 'OB-007',
       title: '看好的方向：电网产业链景气与政策共振',
@@ -1015,7 +901,7 @@ export function seedData() {
       description: '植入《个人投资体系总纲-人机共创融合版》v2.0：5 条核心底层信念（IS-2026-001~005）与六大融合策略（M-2026-001~006）。',
       version: 'v2.0',
       createdAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
     createChangeLog({
       id: 'CL-002',
@@ -1023,7 +909,7 @@ export function seedData() {
       description: '能力圈边界定义：科技 / 消费 / 医药 / 资源 / 红利 / 黄金 / 债券；新增黄金 ETF 与红利 ETF 大类资产观察标的。',
       version: 'v2.0',
       createdAt: '2026-08-21',
-      isSample: true,
+      isSample: false,
     }),
   ]
 
@@ -1282,11 +1168,11 @@ export function seedData() {
       status: '执行中',
       createdAt: todayStr,
       updatedAt: todayStr,
-      isSample: true,
+      isSample: false,
     }),
   ]
 
-  // ---------- 示例：L4 2026-08 月度策略（§15.4.2） ----------
+  // ---------- L4 2026-08 月度策略（用户实际执行计划，含电网ETF观察） ----------
   const monthlyStrategies = [
     createMonthlyStrategy({
       ym: '2026-08',
@@ -1313,148 +1199,15 @@ export function seedData() {
       ],
       createdAt: todayStr,
       updatedAt: todayStr,
-      isSample: true,
+      isSample: false,
     }),
   ]
 
-  // ---------- 示例：L5/L6 评分卡 中国神华（§15.5） ----------
-  const scoreCards = [
-    createScoreCard({
-      targetCode: '601088',
-      targetName: '中国神华',
-      targetType: '个股',
-      strategyId: strategies[0].id,
-      monthlyId: monthlyStrategies[0].id,
-      evaluationDate: todayStr,
-      l1Passed: true,
-      l1Violations: [],
-      winRate: {
-        total: 78,
-        breakdown: {
-          macroMatch: { score: 12, weight: 15, note: '衰退末期红利资产受益+12', agent: '宏观周期Agent' },
-          industryProsperity: { score: 20, weight: 25, note: '红利行业景气稳定+20', agent: '行业景气Agent' },
-          fundamentalQuality: { score: 22, weight: 25, note: 'ROE稳定14%，经营现金流持续为正+22', agent: '财报解读Agent' },
-          complianceRisk: { score: 20, weight: 20, note: '合规通过+20', agent: '合规风控Agent' },
-          sentimentAlignment: { score: 4, weight: 15, note: '估值偏低+4，缺乏催化剂', agent: '市场情绪Agent' },
-        },
-        vetoByCompliance: false,
-        vetoByIndustryDeclineHighBeta: false,
-        grade: '高',
-      },
-      oddRate: {
-        total: 72,
-        breakdown: {
-          valuationAttractiveness: { score: 25, weight: 30, note: 'PE历史分位18%+25', agent: '财报解读Agent' },
-          upsidePotential: { score: 20, weight: 30, note: '股息率6.3%，上行空间稳健+20', agent: '行业景气/技术形态' },
-          downsideProtection: { score: 20, weight: 25, note: '高股息+业绩稳定提供保护+20', agent: '市场情绪' },
-          strategyFit: { score: 7, weight: 15, note: '匹配当期价值侧重风格+7', agent: '协调Agent' },
-        },
-        grade: '中高',
-        rewardRiskRatio: '2.5:1',
-      },
-      attractiveness: 76,
-      humanAdjustment: 0,
-      finalAttractiveness: 76,
-      priorityTier: 'A',
-      positionAdvice: {
-        matrixRange: { min: 8, max: 12 },
-        ruleCap: 15,
-        finalRange: { min: 8, max: 12 },
-        strategyType: '价值',
-        priorityRank: 1,
-        rebalanceTriggers: {
-          addPosition: '回调至PE历史分位<15%加仓至12%',
-          trimPosition: 'PE>历史50分位减至8%以下',
-          takeProfit: '股息率低于4.5%或涨超50%',
-          stopLoss: '核心逻辑破坏（煤价暴跌/政策加税）优先止损；价格-12%兜底',
-        },
-        industryExposures: [{ industry: '资源品（煤炭/红利）', weightPct: 100 }],
-        sameIndustryExposureTotal: 10,
-        industryConcentrationOk: true,
-      },
-      l7Checks: {
-        hasMemo: true,
-        withinTradingPlan: true,
-        noIntradayDecision: true,
-        stopLossDefined: true,
-        l7Passed: true,
-        blockedReasons: [],
-      },
-      agentSources: [
-        { agent: '宏观周期Agent', outputRef: '2026-Q3衰退末期', confidence: 65 },
-        { agent: '行业景气Agent', outputRef: '资源/红利景气稳定', confidence: 80 },
-      ],
-      updatedAt: todayStr,
-      isSample: true,
-    }),
-  ]
+  // ---------- L5/L6 评分卡（示例已清除，按用户实际标的生成） ----------
+  const scoreCards = []
 
-  // ---------- 示例：基金代码穿透分析任务（§15.9）：005827易方达蓝筹精选混合 ----------
-  const fundAnalysisJobs = [
-    createFundAnalysisJob({
-      code: '005827',
-      submittedAt: todayStr,
-      submittedBy: '协调Agent',
-      step1: {
-        status: '成功',
-        fullName: '易方达蓝筹精选混合型证券投资基金',
-        fundType: '混合型',
-        fundCompany: '易方达基金管理有限公司',
-        manager: '张坤',
-        managerTenure: 6.5,
-        inceptionDate: '2018-09-05',
-        aum: 420,
-        latestNav: 2.356,
-        equityRatio: 92,
-        dataSource: '东方财富妙想MCP·综合诊基',
-        errorNote: '',
-      },
-      step2: {
-        status: '成功',
-        topHoldings: [
-          { name: '贵州茅台', weight: 9.5, industry: '食品饮料' },
-          { name: '五粮液', weight: 7.8, industry: '食品饮料' },
-          { name: '腾讯控股', weight: 7.2, industry: '互联网/科技' },
-          { name: '泸州老窖', weight: 6.5, industry: '食品饮料' },
-          { name: '洋河股份', weight: 5.8, industry: '食品饮料' },
-        ],
-        industryDistribution: [
-          { industry: '食品饮料（白酒）', weight: 42 },
-          { industry: '互联网/科技', weight: 18 },
-          { industry: '医药', weight: 12 },
-          { industry: '消费服务', weight: 10 },
-          { industry: '其他', weight: 18 },
-        ],
-        styleBox: '大盘价值+品质（集中消费）',
-        primaryIndustry: '食品饮料（白酒）',
-        capabilityCircleMatch: true,
-        capabilityCircleGap: '',
-      },
-      step3: {
-        status: '成功',
-        ytdReturn: 5.2, oneYearReturn: 8.3, threeYearAnnualReturn: -4.8,
-        maxDrawdown: 45.6, sharpeRatio: 0.35, volatility: 22.4,
-        trackingError: 6.2, informationRatio: 0.42,
-        aumCheck: true, // 420亿在20-500之间
-        managerStyleStable: true,
-        styleMatchCapability: true, // 白酒/医药/科技均在能力圈
-        companyComplianceClean: true,
-        vetoHits: ['近3年年化收益为负（4.8%），需要关注但不直接否决；近最大回撤45.6%超过体系25%阈值，需明确标记风险'],
-        vetoPassed: true, // 暂不触发一票否决（经理年限>1，业绩非后20%）
-        finalFundScore: 62,
-      },
-      step4: { status: '待执行', scoreCardId: '', note: '需生成对应L5评分卡（胜率中，赔率中）；最大回撤风险需写进说明' },
-      step5: {
-        status: '待执行',
-        industryExposureCheck: false, // 需人工复核：白酒42%+个股白酒8%=50%>30%上限！
-        totalEquityCheck: true,
-        finalDecision: '待处理',
-        decisionNote: '关键警报：食品饮料敞口42%权重，如果已有白酒个股持仓（≥8%），合计会突破单行业30%上限，需减配白酒或另选行业分散基金',
-      },
-      overallStatus: '待人工复核',
-      isSample: true,
-    }),
-  ]
+  // ---------- 基金代码穿透分析任务（示例已清除，按需输入基金代码创建） ----------
+  const fundAnalysisJobs = []
 
   return {
     principles,
