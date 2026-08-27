@@ -525,7 +525,7 @@ export default function Home() {
                     const a = h.code ? analysisTargets[h.code] : null
                     const blocked = a ? isBlocked(a.compliance) : false
                     const suggest = suggestAction(h, { attractiveness: a?.attractiveness, blocked })
-                    const displayName = h.liveName || h.name
+                    const displayName = h.name || h.liveName || h.code
                     return (
                       <TableRow key={h.id} sx={{ '& td': { fontSize: 13, color: tokens.ink700, py: 1.1, whiteSpace: 'nowrap' }, '&:hover': { bgcolor: tokens.bgPage }, transition: `background ${tokens.transition?.fast || '.15s'}` }}>
                         <TableCell>

@@ -112,7 +112,7 @@ export function deriveHoldings(trades = [], targets = [], opts = {}) {
     if (!groups[key]) {
       groups[key] = {
         id: t.id,
-        name: t.targetName,
+        name: t.targetName || tg?.name || '',
         code: tg?.code || '',
         direction: t.direction,
         industry: t.industry || '未分类',
@@ -159,6 +159,8 @@ export function deriveHoldings(trades = [], targets = [], opts = {}) {
       r.liveQuote = q
       r.price = price
       r.liveName = q.name || ''
+      // 本地名称缺失或只有代码时，才用行情接口返回的名称补充，避免英文行情名覆盖中文名
+      if ((!r.name || r.name === r.code) && q.name) r.name = q.name
       r.changePct = Number.isFinite(Number(q.changePct)) ? Number(q.changePct) : null
       r.valueCNY = shares * price * (FX[r.currency] || 1)
     } else {

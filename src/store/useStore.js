@@ -97,6 +97,18 @@ function migrateV10(persisted) {
   return merged
 }
 
+// v10 → v11：补全标的真实中文名称（种子更新 targets/trades/funds 的 name 字段，
+// 如 159139 → 人工智能ETF华泰柏瑞）。持仓相关实体以最新种子整体重置；
+// 实时份额缓存保留（key=targetId 不变，份额与市值计算不受影响）。
+function migrateV11(persisted) {
+  const merged = migrateV10(persisted)
+  const fresh = seedData()
+  for (const key of HOLDINGS_KEYS) {
+    merged[key] = fresh[key]
+  }
+  return merged
+}
+
 // 实体 → 数组键 / 业务编号类型 映射
 const ENTITY_META = {
   principles: { key: 'principles', idType: 'IS', idField: 'id' },
@@ -397,8 +409,8 @@ export const useStore = create(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 10,
-      migrate: migrateV10,
+      version: 11,
+      migrate: migrateV11,
     },
   ),
 )
