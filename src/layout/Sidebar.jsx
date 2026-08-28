@@ -19,6 +19,10 @@ import PieChart from '@mui/icons-material/PieChart'
 import Dashboard from '@mui/icons-material/DashboardCustomize'
 import SearchTwo from '@mui/icons-material/Search'
 import ShieldCheck from '@mui/icons-material/Shield'
+import Tune from '@mui/icons-material/Tune'
+import Today from '@mui/icons-material/Today'
+import CalendarMonth from '@mui/icons-material/CalendarMonth'
+import EventNote from '@mui/icons-material/EventNote'
 
 import tokens from '../theme/tokens'
 
@@ -39,6 +43,14 @@ const EXTENDED = [
   { label: '基金管理', path: '/funds', icon: AccountTree },
   { label: '基金代码穿透分析', path: '/fund-analyze', icon: SearchTwo },
   { label: '行业观察', path: '/industry-watch', icon: TrendingUp },
+]
+
+// 决策节奏（日/周/月）+ 资产观点
+const RHYTHM = [
+  { label: '资产观点', path: '/asset-views', icon: Tune },
+  { label: '日度简报', path: '/daily-brief', icon: Today },
+  { label: '周度分析', path: '/weekly-report', icon: CalendarMonth },
+  { label: '月度思路', path: '/monthly-brief', icon: EventNote },
 ]
 
 const CORE = [
@@ -160,11 +172,12 @@ export default function Sidebar() {
         </Box>
         <Box>
           <Typography sx={{ fontWeight: 800, color: tokens.ink900, fontSize: 14, lineHeight: 1.2 }}>认知投资</Typography>
-          <Typography sx={{ fontSize: 10, color: tokens.ink400, letterSpacing: '0.5px' }}>v2.7.0</Typography>
+          <Typography sx={{ fontSize: 10, color: tokens.ink400, letterSpacing: '0.5px' }}>v2.9.0</Typography>
         </Box>
       </Box>
 
       <Section title="六层认知体系" items={LAYERS} navigate={navigate} location={location} />
+      <Section title="决策节奏与观点" items={RHYTHM} navigate={navigate} location={location} />
       <Section title="扩展工作台" items={EXTENDED} navigate={navigate} location={location} />
       <Section title="核心工作台" items={CORE} navigate={navigate} location={location} />
       <Section title="记忆与体系" items={SYSTEM} navigate={navigate} location={location} />

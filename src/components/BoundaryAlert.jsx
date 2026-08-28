@@ -6,7 +6,7 @@ import StatusPill from './StatusPill'
 
 /**
  * 边界红线提示条（交易页整宽深色条）。
- * 含「不可逾越」标签，强调 AI 无交易决策权、边界外记录须人工复核。
+ * 含「不可逾越」标签，强调 AI 无自动执行权、方向建议仅供参考、边界外记录须人工复核。
  */
 export default function BoundaryAlert({ children }) {
   return (

@@ -44,7 +44,7 @@ export default function AiProtocol() {
         status={
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 0.5, borderRadius: 0, bgcolor: tokens.aiSoft }}>
             <Robot sx={{ fontSize: 15, color: tokens.ai }} />
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: tokens.ai }}>AI 辅助 · 不越权</Typography>
+            <Typography sx={{ fontSize: 12, fontWeight: 600, color: tokens.ai }}>AI 可给方向建议 · 人拍板执行</Typography>
           </Box>
         }
       />

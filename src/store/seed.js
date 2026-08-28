@@ -1209,6 +1209,13 @@ export function seedData() {
   // ---------- 基金代码穿透分析任务（示例已清除，按需输入基金代码创建） ----------
   const fundAnalysisJobs = []
 
+  // ---------- 应用逻辑完善（改造蓝图 §4）：以下为人类/日程持续填充的空实体集合 ----------
+  const assetViews = [] // 大类资产方向性观点（人类录入或 AI 草稿）
+  const targetStates = [] // 标的动态方向建议（状态机，日度触发刷新）
+  const dailyBriefs = [] // 日度市场动态简报
+  const weeklyReports = [] // 周度投资分析
+  const monthlyBriefs = [] // 月度操作思路（L4 草稿）
+
   return {
     principles,
     l1,
@@ -1226,6 +1233,11 @@ export function seedData() {
     monthlyStrategies,
     scoreCards,
     fundAnalysisJobs,
+    assetViews,
+    targetStates,
+    dailyBriefs,
+    weeklyReports,
+    monthlyBriefs,
     dashboard,
     analysis: { targets: {}, macro: null }, // 实时分析结果缓存（垂类 Agent 分析输出）
     version: 'v2.5',

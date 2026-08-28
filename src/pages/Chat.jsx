@@ -265,7 +265,7 @@ export default function Chat() {
           </Button>
         </Box>
         <Typography sx={{ fontSize: 11, color: tokens.ink400, mt: 1 }}>
-          AI 无交易决策权，所有决策由你做出；体系底层信念与核心风控的修改需经你确认后才生效。
+          AI 可给出方向与仓位建议（建议级），但无自动执行权；所有买卖决策由你做出，体系底层信念与核心风控的修改需经你确认后才生效。
         </Typography>
       </Box>
 

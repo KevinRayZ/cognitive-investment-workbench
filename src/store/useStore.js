@@ -109,6 +109,17 @@ function migrateV11(persisted) {
   return merged
 }
 
+// v11 → v12：新增资产观点/标的动态方向/日周月报告等空实体集合（应用逻辑完善·改造蓝图 §4）。
+// 已存在则保留用户数据，不存在则用最新种子中的空数组补齐。
+function migrateV12(persisted) {
+  const merged = migrateV11(persisted)
+  const fresh = seedData()
+  for (const key of ['assetViews', 'targetStates', 'dailyBriefs', 'weeklyReports', 'monthlyBriefs']) {
+    if (!Array.isArray(merged[key])) merged[key] = fresh[key] || []
+  }
+  return merged
+}
+
 // 实体 → 数组键 / 业务编号类型 映射
 const ENTITY_META = {
   principles: { key: 'principles', idType: 'IS', idField: 'id' },
@@ -127,6 +138,11 @@ const ENTITY_META = {
   monthlyStrategies: { key: 'monthlyStrategies', idType: 'MS', idField: 'id' }, // L4月度策略
   scoreCards: { key: 'scoreCards', idType: 'SC', idField: 'id' }, // L5/L6评分卡
   fundAnalysisJobs: { key: 'fundAnalysisJobs', idType: 'FA', idField: 'id' }, // 基金代码穿透分析
+  assetViews: { key: 'assetViews', idType: null }, // 资产观点（大类方向性思路）
+  targetStates: { key: 'targetStates', idType: null }, // 标的动态方向建议（状态机）
+  dailyBriefs: { key: 'dailyBriefs', idType: null }, // 日度市场动态简报
+  weeklyReports: { key: 'weeklyReports', idType: null }, // 周度投资分析
+  monthlyBriefs: { key: 'monthlyBriefs', idType: null }, // 月度操作思路
 }
 
 function today() {
@@ -225,6 +241,37 @@ export const useStore = create(
       /** 实时持仓份额缓存：key=targetId，value=份额（由用户给定市值÷首次行情价锁定）。 */
       setLiveShare: (key, shares) => set({ liveShares: { ...get().liveShares, [key]: shares } }),
       setLiveSharesBulk: (obj) => set({ liveShares: { ...get().liveShares, ...obj } }),
+
+      /** 资产观点：刷新某观点的 AI 校验结果（三方对照：人观点 vs 数据 vs 总纲区间）。 */
+      setAssetViewAiCheck: (id, aiCheck) => {
+        const list = get().assetViews || []
+        set({ assetViews: list.map((v) => (v.id === id ? { ...v, aiCheck: { ...v.aiCheck, ...aiCheck }, updatedAt: today() } : v)) })
+      },
+
+      /** 标的动态方向建议：按 targetId 幂等写入（存在则合并更新，不存在则新建）。 */
+      upsertTargetState: (targetId, patch = {}) => {
+        const list = get().targetStates || []
+        const idx = list.findIndex((ts) => ts.targetId === targetId)
+        if (idx >= 0) {
+          const next = [...list]
+          next[idx] = { ...next[idx], ...patch, targetId, updatedAt: today() }
+          set({ targetStates: next })
+          return next[idx]
+        }
+        const rec = { ...patch, targetId, updatedAt: today() }
+        set({ targetStates: [...list, rec] })
+        return rec
+      },
+
+      /** 标的动态方向建议：人类确认方向（updatedBy=human-confirmed）。 */
+      confirmTargetState: (targetId, direction) => {
+        const list = get().targetStates || []
+        set({
+          targetStates: list.map((ts) =>
+            ts.targetId === targetId ? { ...ts, direction, updatedAt: today(), updatedBy: 'human-confirmed' } : ts,
+          ),
+        })
+      },
 
       /** 便捷：错误库（reviews 中 type=错误清单）。 */
       getErrors: () => get().reviews.filter((r) => r.type === '错误清单'),
@@ -409,8 +456,8 @@ export const useStore = create(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 11,
-      migrate: migrateV11,
+      version: 12,
+      migrate: migrateV12,
     },
   ),
 )

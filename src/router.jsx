@@ -17,6 +17,10 @@ import IndustryWatch from './pages/IndustryWatch'
 import StrategyCenter from './pages/StrategyCenter'
 import ScoreEngine from './pages/ScoreEngine'
 import FundAnalyze from './pages/FundAnalyze'
+import AssetViews from './pages/AssetViews'
+import DailyBrief from './pages/DailyBrief'
+import WeeklyReport from './pages/WeeklyReport'
+import MonthlyBrief from './pages/MonthlyBrief'
 
 /**
  * 路由表（十二屏 + 研究列表 + 基金管理 + 行业观察 + 设置）。
@@ -41,6 +45,10 @@ export const router = createBrowserRouter([
       { path: 'strategy', element: <StrategyCenter /> },
       { path: 'score-engine', element: <ScoreEngine /> },
       { path: 'fund-analyze', element: <FundAnalyze /> },
+      { path: 'asset-views', element: <AssetViews /> },
+      { path: 'daily-brief', element: <DailyBrief /> },
+      { path: 'weekly-report', element: <WeeklyReport /> },
+      { path: 'monthly-brief', element: <MonthlyBrief /> },
       { path: 'methods', element: <MethodL2 /> },
       { path: 'inspiration', element: <ObservationL6 /> },
       { path: 'ai-protocol', element: <AiProtocol /> },

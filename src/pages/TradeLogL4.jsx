@@ -67,7 +67,7 @@ export default function TradeLogL4() {
         breadcrumb="六层认知体系 / Layer ④"
         title="交易决策日志"
         subtitle="每笔买卖的完整记录 + 决策依据（仅人工录入）"
-        status={<StatusPill label="AI 无交易决策权" tone="up" />}
+        status={<StatusPill label="AI 无自动执行权（建议仅供参考）" tone="up" />}
         actions={<Button variant="contained" startIcon={<Add />} onClick={openNew} sx={{ bgcolor: tokens.primary }}>录入交易</Button>}
       />
 
@@ -80,7 +80,7 @@ export default function TradeLogL4() {
         </Box>
 
         <BoundaryAlert>
-          AI 无任何自主交易决策权：交易记录仅限人工录入，AI 不得生成或替用户填写交易行；边界外记录须人工复核后方可解除警告态。
+          AI 无自动执行权：交易记录仅限人工录入，AI 可给出方向/仓位建议（建议级）但不得自动生成或替用户填写交易行；边界外记录须人工复核后方可解除警告态。
         </BoundaryAlert>
 
         {breach ? (

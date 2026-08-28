@@ -38,7 +38,7 @@ export default function DisclaimerBar() {
         !
       </Box>
       <Typography sx={{ fontSize: 13, lineHeight: 1.4 }}>
-        人类最终负责：本工作台所有投资决策由人做出，AI 仅作辅助，不越权、不承诺收益，边界外决策必须人工确认。
+        人类最终负责：AI 可给出方向与仓位建议（建议级，仅供决策参考），但无自动执行权；本工作台所有投资决策与交易执行均由你做出，边界外决策必须人工确认。
       </Typography>
     </Box>
   )

@@ -474,7 +474,103 @@ export function createScoreCard(partial = {}) {
   }
 }
 
-// ---------- 16. 基金代码穿透分析任务（第十五章 §15.9 五步流程） ----------
+// ---------- 16. 资产观点（大类资产方向性思路 · §3.2 C2） ----------
+export function createAssetView(partial = {}) {
+  return {
+    id: uid('AV'),
+    assetClass: '权益', // 权益 / 债券 / 黄金 / 现金 / 红利 / 成长 / 其他
+    direction: '标配', // 超配 / 标配 / 低配
+    rationale: '', // 人类观点依据
+    strength: 50, // 观点强度 0-100
+    source: 'human', // human / ai-draft / ai-adjusted
+    status: '待确认', // 生效 / 待确认 / 已失效
+    linkedPhase: '', // 关联周期阶段（复苏/过热/滞胀/衰退末期），可为空
+    aiCheck: {
+      dataEvidence: '', // 数据面证据（估值分位/资金流/趋势）
+      systemRange: { min: 0, max: 0 }, // 总纲 §7.1 允许区间
+      conflict: [], // 与数据/总纲的冲突点
+    },
+    updatedAt: '',
+    isSample: false,
+    ...partial,
+  }
+}
+
+// ---------- 17. 标的动态方向建议（状态机 · §3.5 C5） ----------
+export function createTargetState(partial = {}) {
+  return {
+    id: uid('TS'),
+    targetId: '',
+    targetName: '',
+    code: '',
+    state: '待观察', // 待观察 / 趋势确认 / 择时入场 / 已入场 / 已放弃
+    prevState: '待观察',
+    direction: '持有维持', // 买入建议 / 加仓候选 / 持有维持 / 减仓预警 / 止损触发 / 一票否决拦截
+    directionReason: '', // 由哪些 Agent 证据/综合建议构成
+    triggers: [], // [{ condition, lastCheck, status }]
+    discipline: {
+      l7Pass: true,
+      violation: '',
+      stopLossHit: false,
+      drawdownRisk: 'green', // green / amber / red
+      positionLimit: { min: 0, max: 0 }, // 总纲 §7 参考区间
+    },
+    agentVotes: [], // [{ agent, direction, confidence }]
+    confidence: 0, // 0-100
+    updatedAt: '',
+    updatedBy: 'auto', // auto / human-confirmed
+    isSample: false,
+    ...partial,
+  }
+}
+
+// ---------- 18. 日度市场动态简报（DailyBrief · §3.4） ----------
+export function createDailyBrief(partial = {}) {
+  return {
+    id: uid('DB'),
+    date: '', // YYYY-MM-DD
+    macro: { phase: '', confidence: 0, keyIndicators: [] },
+    market: { indices: [], breadth: '', fundFlow: '' },
+    events: [], // [{ source, title, impact, relatedTargets }]
+    triggered: [], // [{ targetId, condition, action }] 触发条件命中列表（核心）
+    updatedAt: '',
+    isSample: false,
+    ...partial,
+  }
+}
+
+// ---------- 19. 周度投资分析（WeeklyReport · §3.4） ----------
+export function createWeeklyReport(partial = {}) {
+  return {
+    id: uid('WR'),
+    weekStart: '',
+    weekEnd: '',
+    industryTrends: [], // [{ industry, trendState, score, change }]
+    holdingHealth: [], // [{ targetId, health, alerts }]
+    l7Audit: { violations: [], riskLevel: '低' },
+    actionItems: [], // 待人类处理事项
+    updatedAt: '',
+    isSample: false,
+    ...partial,
+  }
+}
+
+// ---------- 20. 月度操作思路（MonthlyBrief = L4 草稿 · §3.4） ----------
+export function createMonthlyBrief(partial = {}) {
+  return {
+    id: uid('MB'),
+    month: '', // YYYY-MM
+    observationPoints: [], // 本月验证假设的观测指标（反向喂日度）
+    triggers: [], // [{ targetId, condition, targetState }]
+    plan: { assetClass: [], industry: [], targets: [], cadence: '', riskPlan: '' },
+    status: '待审定', // 待审定 / 已审定 / 已失效
+    updatedAt: '',
+    isSample: false,
+    ...partial,
+  }
+}
+
+// ---------- 21. 基金代码穿透分析任务（第十五章 §15.9 五步流程） ----------
 export function createFundAnalysisJob(partial = {}) {
   return {
     id: uid('FA'),

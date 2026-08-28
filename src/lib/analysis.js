@@ -5,7 +5,7 @@
  *
  * 频率策略（用户要求）：
  *   - 宏观（梅林时钟 / 大类资产）：约一个月更新一次（TTL 30 天）
- *   - 标的级（观察池 / 持仓：吸引力、财务、合规、技术）：约 6 小时更新一次
+ *   - 标的级（观察池 / 持仓）：当日有效，收盘后刷新（改造蓝图 §3.4 C4：TTL 由 6 小时收短为「当日」）
  *
  * 说明：纯前端无法调用 WorkBuddy Skill 工具，故「垂类 skill」在此工程化为内置的垂类分析
  * prompt（源自 agents/*.md 精华）。用户在对话中仍可直接调用对应 Expert/垂直 Agent。
@@ -18,18 +18,30 @@ import { posToPhase, clampPos } from '../utils/dashboard'
 
 const TTL = {
   macro: 30 * 24 * 3600 * 1000, // 30 天
-  target: 6 * 3600 * 1000, // 6 小时
 }
 
-// 7 垂类视角精华（取自 agents/*.md 系统设定，注入单次分析的 system 段）
-const VERTICAL_BRIEF = `你是「认知投资工作台」协调 Agent，须依《个人投资体系总纲》统筹以下 7 个垂类视角对标的做结构化研判。每个视角只给局部判断，严禁输出买卖/仓位指令：
+/** 标的级 TTL：当日有效，跨过收盘点（15:00）后视为过期（改造蓝图 §3.4：收盘后刷新）。 */
+function targetTTL() {
+  const now = new Date()
+  const close = new Date(now)
+  close.setHours(15, 0, 0, 0)
+  if (now >= close) close.setDate(close.getDate() + 1)
+  return Math.max(60 * 1000, close.getTime() - now.getTime())
+}
+
+// 7 垂类视角精华（取自 agents/*.md 系统设定，注入单次分析的 system 段）。
+// 改造蓝图 §3.1 C1：由「严禁输出买卖/仓位指令」放宽为「可输出方向建议（建议级），禁止自动执行」。
+const VERTICAL_BRIEF = `你是「认知投资工作台」协调 Agent，须依《个人投资体系总纲》统筹以下 7 个垂类视角对标的做结构化研判。每个视角给出局部判断与【方向建议】（建议级，供人类决策参考，绝不自动执行）：
 1) 财报解读：ROE / 扣非净利 / 经营现金流 / 负债率 / 分红；量化打分 + 一票否决项（连续两年经营现金流转负 / 商誉>净资产30% / 审计非标 / 造假嫌疑）。
 2) 宏观周期：标的所处周期相位与流动性环境（复苏/过热/滞胀/衰退）。
 3) 行业景气：供需格局 / 价格趋势 / 产业链位置；能力圈校验（科技/消费/医药/资源/红利/黄金/债券，圈外谨慎）。
 4) 市场情绪：广度 / 资金流向 / 风险偏好；逆向信号必须有基本面佐证。
 5) 技术形态：趋势 / 关键支撑阻力 / 量价；震荡市信号失效，不独立构成依据。
 6) 标的合规风控（最高优先级）：ST/退市/处罚/立案/治理瑕疵；命中否决即阻断。
-7) 大类资产配置：与组合战略配置的关系（权益≥30% 底线等）。`
+7) 大类资产配置：与组合战略配置的关系（权益≥30% 底线等）。
+
+方向建议枚举（direction 字段）：买入建议 / 加仓候选 / 持有维持 / 减仓预警 / 止损触发 / 一票否决拦截。
+输出须自带【置信度】【纪律依据】【触发条件】；所有方向仅为建议，禁止自动执行，最终决策权在人。`
 
 let _systemCache = { at: 0, prompt: '' }
 async function ensureSystem() {
@@ -76,6 +88,8 @@ export async function analyzeTarget({ code, name, sector }) {
   "technical": "技术形态（1 句）",
   "compliance": "合规结论（通过/阻断 及命中项）",
   "verdict": "持有型/观察型/逆向型/规避",
+  "direction": "买入建议/加仓候选/持有维持/减仓预警/止损触发/一票否决拦截（建议级，禁止自动执行）",
+  "directionReason": "方向建议依据（本领域证据→方向推导，1-2句）",
   "confidence": "高/中/低",
   "caveat": "主要局限或需核实项"
 }`
@@ -152,7 +166,7 @@ export async function runRealtimeAnalysis({ force = false, onlyCode = null } = {
     : all.filter((t) => {
         if (force) return true
         const c = cache[t.code]
-        return !c || !c.updatedAt || now - new Date(c.updatedAt).getTime() > TTL.target
+        return !c || !c.updatedAt || now - new Date(c.updatedAt).getTime() > targetTTL()
       })
 
   let analyzedTargets = 0

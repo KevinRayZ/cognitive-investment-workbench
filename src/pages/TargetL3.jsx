@@ -25,6 +25,7 @@ import IdBadge from '../components/IdBadge'
 import KpiCard from '../components/KpiCard'
 import { fmtCurrency, fmtPct } from '../utils/formatters'
 import { createTarget } from '../models/schemas'
+import { buildDefaultTargetState, DIRECTIONS, DIRECTION_TONE, STATE_TONE } from '../utils/direction'
 
 const STAGE_TONE = { 深度: 'primary', 研究中: 'ai', 跟踪中: 'neutral' }
 
@@ -50,6 +51,10 @@ export default function TargetL3() {
   const create = useStore((s) => s.create)
   const update = useStore((s) => s.update)
   const remove = useStore((s) => s.remove)
+  const targetStates = useStore((s) => s.targetStates) || []
+  const upsertTargetState = useStore((s) => s.upsertTargetState)
+  const confirmTargetState = useStore((s) => s.confirmTargetState)
+  const analysis = useStore((s) => s.analysis)
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
@@ -83,6 +88,20 @@ export default function TargetL3() {
   const kf = target.keyFinancials || {}
   const pct = kf.currentPercentile
   const pctCold = typeof pct === 'number' && pct <= 40
+
+  // 标的动态方向建议（状态机 §3.5 C5）
+  const ts = targetStates.find((x) => x.targetId === target.id)
+  const ai = analysis?.targets?.[target.code]
+  const genDirection = () => {
+    const base = buildDefaultTargetState(target)
+    upsertTargetState(target.id, {
+      ...base,
+      direction: ai?.direction || base.direction,
+      directionReason: ai?.directionReason || ai?.thesis || '基于 AI 分析缓存与状态机默认，供人类参考。',
+      confidence: ai ? (ai.confidence === '高' ? 75 : ai.confidence === '中' ? 55 : 40) : 50,
+      prevState: ts?.state || base.state,
+    })
+  }
 
   const openNew = () => { setForm({ ...EMPTY }); setOpen(true) }
   const openEdit = () => { setForm({ ...target }); setOpen(true) }
@@ -143,6 +162,50 @@ export default function TargetL3() {
         </Box>
 
         <AiBox>{`静态占位：当前估值分位 ${pct != null ? fmtPct(pct, 0) : '未知'}，处于${pctCold ? '冷区' : '偏热区'}。建议先判断标的是价值型还是成长型，按对应策略（M-2026-002 价值 / M-2026-003 GARP）交叉验证后再决策，并引用 IS-2026-003（价值为锚）与 IS-2026-002（能力圈）。`}</AiBox>
+
+        {/* 标的动态方向建议（状态机 + 触发 + 纪律 + 置信度） */}
+        <Box sx={{ p: 2, borderRadius: tokens.radius.md, bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderTop: `3px solid ${tokens.primary}` }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.25 }}>
+            <Typography sx={{ fontSize: 14, fontWeight: 700, color: tokens.ink900 }}>动态方向建议</Typography>
+            {ts ? (
+              <>
+                <StatusPill label={`状态 · ${ts.state}`} tone={STATE_TONE[ts.state] || 'neutral'} size="sm" />
+                <StatusPill label={`方向 · ${ts.direction}`} tone={DIRECTION_TONE[ts.direction] || 'hold'} size="sm" />
+                <Typography sx={{ fontSize: 11.5, color: tokens.ink400 }}>置信 {ts.confidence}/100 · {ts.updatedBy === 'human-confirmed' ? '人工确认' : '自动'}</Typography>
+              </>
+            ) : (
+              <Button size="small" variant="outlined" onClick={genDirection} sx={{ color: tokens.primary, borderColor: tokens.primary }}>生成方向建议</Button>
+            )}
+          </Box>
+
+          {ts ? (
+            <Stack spacing={1}>
+              <Typography sx={{ fontSize: 12.5, color: tokens.ink700 }}>{ts.directionReason || '暂无依据说明。'}</Typography>
+              {(ts.triggers || []).length > 0 && (
+                <Box>
+                  <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: tokens.ink500 }}>触发条件</Typography>
+                  <Stack spacing={0.3}>
+                    {(ts.triggers || []).map((t, i) => (
+                      <Typography key={i} sx={{ fontSize: 12, color: tokens.ink700 }}>· {t.condition}（{t.status || '待观察'}）</Typography>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: tokens.ink500 }}>纪律校验：</Typography>
+                {ts.discipline?.l7Pass === false ? <StatusPill label="L7 未通过" tone="warn" size="sm" /> : <StatusPill label="L7 通过" tone="down" size="sm" />}
+                {ts.discipline?.stopLossHit ? <StatusPill label="止损触发" tone="warn" size="sm" /> : null}
+                {ts.discipline?.positionLimit?.max ? <Typography sx={{ fontSize: 11.5, color: tokens.ink400 }}>仓位参考 {ts.discipline.positionLimit.min}~{ts.discipline.positionLimit.max}%</Typography> : null}
+                <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                  <Button size="small" variant="outlined" onClick={genDirection} sx={{ color: tokens.ink500, borderColor: tokens.border }}>刷新</Button>
+                  <Button size="small" variant="contained" onClick={() => confirmTargetState(target.id, ts.direction)} sx={{ bgcolor: tokens.primary }}>确认方向</Button>
+                </Box>
+              </Box>
+            </Stack>
+          ) : (
+            <Typography sx={{ fontSize: 12.5, color: tokens.ink400 }}>尚未生成。方向仅建议级，最终决策与执行权在你。</Typography>
+          )}
+        </Box>
 
         <Box>
           <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#9A6700', mb: 1 }}>关键风险</Typography>

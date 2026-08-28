@@ -53,7 +53,12 @@ export default function StrategyCenter() {
         breadcrumb="扩展工作台 / 七层决策漏斗"
         title="策略中心 L3 / L4"
         subtitle="L3 季度战略配置（大方向不可轻易调） + L4 月度战术执行（可落地、带交易计划、带风控脚本）"
-        actions={<Button variant="outlined" sx={{ color: tokens.primary, borderColor: tokens.primary }} onClick={() => navigate('/industry-watch')}>查看行业观察 →</Button>}
+        actions={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" sx={{ color: tokens.warn, borderColor: tokens.warn }} onClick={() => navigate('/monthly-brief')}>生成本月 L4 思路 →</Button>
+            <Button variant="outlined" sx={{ color: tokens.primary, borderColor: tokens.primary }} onClick={() => navigate('/industry-watch')}>查看行业观察 →</Button>
+          </Stack>
+        }
       />
 
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -72,7 +77,9 @@ export default function StrategyCenter() {
             <Typography sx={{ fontSize: 12, color: tokens.ink400 }}>对应总纲第十五章 §15.4.1 季度策略 5 要素</Typography>
           </Box>
           {strategies.length === 0 ? (
-            <Card sx={{ p: 3, borderRadius: tokens.radius.md, border: `1px solid ${tokens.border}` }}><Typography sx={{ color: tokens.ink400, textAlign: 'center', py: 3 }}>暂无季度策略</Typography></Card>
+            <Card sx={{ p: 3, borderRadius: tokens.radius.md, border: `1px dashed ${tokens.border}` }}>
+              <Typography sx={{ color: tokens.ink400, textAlign: 'center', py: 1 }}>L3 策略内容待用户填充（§3.3 C3：schema / UI / 派生逻辑已就绪，填充后即启用，无需改代码）</Typography>
+            </Card>
           ) : (
             strategies.map((st) => (
               <Card key={st.id} sx={{
@@ -181,7 +188,11 @@ export default function StrategyCenter() {
             <Typography sx={{ fontSize: 12, color: tokens.ink400 }}>对应总纲第十五章 §15.4.2 月度策略 6 要素</Typography>
           </Box>
           {monthlyStrategies.length === 0 ? (
-            <Card sx={{ p: 3, borderRadius: tokens.radius.md, border: `1px solid ${tokens.border}` }}><Typography sx={{ color: tokens.ink400, textAlign: 'center', py: 3 }}>暂无月度策略</Typography></Card>
+            <Card sx={{ p: 3, borderRadius: tokens.radius.md, border: `1px dashed ${tokens.border}` }}>
+              <Typography sx={{ color: tokens.ink400, textAlign: 'center', py: 1 }}>
+                暂无月度策略。有 L3 时到「月度思路」页可自动派生 L4 草稿；无 L3 则进入待定态（仅 L2 月度快照 + 待办提示）。
+              </Typography>
+            </Card>
           ) : (
             monthlyStrategies.map((ms) => (
               <Card key={ms.id} sx={{
