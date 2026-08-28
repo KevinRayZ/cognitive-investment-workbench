@@ -11,6 +11,8 @@ import CheckCircle from '@mui/icons-material/CheckCircleOutline'
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
 import StatusPill from '../components/StatusPill'
+import CircleFeedSection from '../components/CircleFeedSection'
+import { CIRCLE } from '../lib/circleFeed'
 import { useStore } from '../store/useStore'
 import { deriveHoldings, checkHealth } from '../utils/dashboard'
 
@@ -59,6 +61,15 @@ export default function WeeklyReport() {
       />
 
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <CircleFeedSection
+          title="本周市场分析聚合"
+          subtitle="张湧的小密圈 · 市场动态分析（本周一至今自动过滤）"
+          tagId={CIRCLE.tags.daily}
+          rows={15}
+          scope="week"
+          emptyHint="本周暂无圈子分析帖。"
+        />
+
         {weeklyReports.length === 0 ? (
           <Card sx={{ p: 4, borderRadius: tokens.radius.md, border: `1px dashed ${tokens.border}` }}>
             <Typography sx={{ color: tokens.ink400, textAlign: 'center' }}>暂无周度分析。</Typography>

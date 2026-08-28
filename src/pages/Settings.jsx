@@ -8,10 +8,11 @@ import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import GitHub from '@mui/icons-material/GitHub'
 import SmartToy from '@mui/icons-material/SmartToy'
+import Forum from '@mui/icons-material/ForumOutlined'
 
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
-import { getGithubToken, setGithubToken, getDeepseekKey, setDeepseekKey } from '../lib/credentials'
+import { getGithubToken, setGithubToken, getDeepseekKey, setDeepseekKey, getCircleToken, setCircleToken } from '../lib/credentials'
 import { pullAll } from '../lib/sync'
 import { useStore } from '../store/useStore'
 
@@ -22,6 +23,7 @@ import { useStore } from '../store/useStore'
 export default function Settings() {
   const [gh, setGh] = useState('')
   const [ds, setDs] = useState('')
+  const [circle, setCircle] = useState('')
   const [saved, setSaved] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null) // { ok, msg }
@@ -29,11 +31,13 @@ export default function Settings() {
   useEffect(() => {
     setGh(getGithubToken())
     setDs(getDeepseekKey())
+    setCircle(getCircleToken())
   }, [])
 
   const onSave = async () => {
     setGithubToken(gh)
     setDeepseekKey(ds)
+    setCircleToken(circle)
     setSaved(true)
     // 保存后立即使云端数据生效（无需刷新）
     try {
@@ -101,6 +105,26 @@ export default function Settings() {
             placeholder="sk-xxx"
             value={ds}
             onChange={(e) => setDs(e.target.value)}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+          />
+        </Box>
+
+        <Box sx={{ p: 2.5, borderRadius: 1.5, border: `1px solid ${tokens.border}`, bgcolor: tokens.surface }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <Forum sx={{ fontSize: 18, color: tokens.primary }} />
+            <Typography sx={{ fontWeight: 600, fontSize: 14, color: tokens.ink700 }}>圈子凭证（市场动态/分析直播数据源）</Typography>
+          </Stack>
+          <Typography sx={{ fontSize: 12.5, color: tokens.ink400, mb: 1.5 }}>
+            用于拉取「张湧的小密圈」的市场动态分析（每日）与市场分析直播（每月）帖子，喂给日/周/月简报。
+            获取方式：浏览器登录圈子页面 → F12 打开开发者工具 → Network 面板 → 任意 japi.hqwx.com 请求 → 复制参数 <b>edu24ol_token</b> 的值。
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            type="password"
+            placeholder="粘贴 edu24ol_token 的值"
+            value={circle}
+            onChange={(e) => setCircle(e.target.value)}
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
           />
         </Box>

@@ -10,6 +10,8 @@ import AutoGraph from '@mui/icons-material/AutoGraph'
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
 import StatusPill from '../components/StatusPill'
+import CircleFeedSection from '../components/CircleFeedSection'
+import { CIRCLE } from '../lib/circleFeed'
 import { useStore } from '../store/useStore'
 
 /**
@@ -80,6 +82,15 @@ export default function MonthlyBrief() {
               : '当前 L3 季度策略为空 → 进入待定态：仅输出 L2 月度快照与待办提示，不阻塞日/周节奏。'}
           </Typography>
         </Box>
+
+        <CircleFeedSection
+          title="市场分析直播（每月）"
+          subtitle="张湧的小密圈 · 月度直播预告/主题/要点（本月自动过滤）"
+          tagId={CIRCLE.tags.monthlyLive}
+          rows={10}
+          scope="month"
+          emptyHint="本月暂无直播帖（通常月初发布预告）。"
+        />
 
         {monthlyBriefs.length === 0 ? (
           <Card sx={{ p: 4, borderRadius: tokens.radius.md, border: `1px dashed ${tokens.border}` }}>

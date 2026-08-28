@@ -1,7 +1,7 @@
 {
   "name": "cognitive_investment_workbench",
   "private": true,
-  "version": "2.9.1",
+  "version": "2.10.0",
   "type": "module",
   "description": "人机协同认知成长型个人投资工作台 · 纯网页版（前端直连 DeepSeek + GitHub 数据层，免后端，打开即用）",
   "scripts": {

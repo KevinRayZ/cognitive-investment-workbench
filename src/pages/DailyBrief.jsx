@@ -10,6 +10,8 @@ import AutoGraph from '@mui/icons-material/AutoGraph'
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
 import StatusPill from '../components/StatusPill'
+import CircleFeedSection from '../components/CircleFeedSection'
+import { CIRCLE } from '../lib/circleFeed'
 import { useStore } from '../store/useStore'
 import { deriveHoldings } from '../utils/dashboard'
 
@@ -59,6 +61,14 @@ export default function DailyBrief() {
             自动调度（每个交易日收盘后）待接入无头脚本后启用；当前可手动生成一份基于现有持仓/宏观/触发状态的简报快照。
           </Typography>
         </Box>
+
+        <CircleFeedSection
+          title="市场动态分析（每日盘中/盘后）"
+          subtitle="张湧的小密圈 · 刘铭 每日市场跟踪，当日帖自动高亮"
+          tagId={CIRCLE.tags.daily}
+          rows={8}
+          emptyHint="近期该标签暂无帖子。"
+        />
 
         {dailyBriefs.length === 0 ? (
           <Card sx={{ p: 4, borderRadius: tokens.radius.md, border: `1px dashed ${tokens.border}` }}>

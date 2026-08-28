@@ -5,6 +5,7 @@
 
 const KEY_GH = 'ciw_github_token'
 const KEY_DS = 'ciw_deepseek_key'
+const KEY_CIRCLE = 'ciw_circle_token'
 
 export function getGithubToken() {
   try {
@@ -39,4 +40,20 @@ export function setDeepseekKey(key) {
 /** 是否已填写两项凭证。 */
 export function hasCredentials() {
   return !!getGithubToken() && !!getDeepseekKey()
+}
+
+/** 圈子凭证（环球青藤 edu24ol_token，用于「张湧的小密圈」数据源）。 */
+export function getCircleToken() {
+  try {
+    return localStorage.getItem(KEY_CIRCLE) || ''
+  } catch {
+    return ''
+  }
+}
+
+export function setCircleToken(token) {
+  try {
+    if (token && token.trim()) localStorage.setItem(KEY_CIRCLE, token.trim())
+    else localStorage.removeItem(KEY_CIRCLE)
+  } catch {}
 }
