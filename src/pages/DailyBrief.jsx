@@ -63,11 +63,13 @@ export default function DailyBrief() {
         </Box>
 
         <CircleFeedSection
-          title="市场动态分析（每日盘中/盘后）"
-          subtitle="张湧的小密圈 · 刘铭 每日市场跟踪，当日帖自动高亮"
+          title="市场动态分析（近三个交易日）"
+          subtitle="张湧的小密圈 · 刘铭 每日市场跟踪，当日帖自动高亮；超出三个交易日的数据不展示"
           tagId={CIRCLE.tags.daily}
-          rows={8}
-          emptyHint="近期该标签暂无帖子。"
+          rows={15}
+          scope="trade3"
+          showTrend
+          emptyHint="近三个交易日暂无圈子分析帖。"
         />
 
         {dailyBriefs.length === 0 ? (

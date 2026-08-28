@@ -14,24 +14,27 @@ import OpenInNew from '@mui/icons-material/OpenInNewOutlined'
 
 import tokens from '../theme/tokens'
 import StatusPill from './StatusPill'
-import { useCircleArticles, firstLine, CIRCLE } from '../lib/circleFeed'
+import { useCircleArticles, firstLine, CIRCLE, tradeDaysBack, analyzeTrend } from '../lib/circleFeed'
 
 const ROLE_TONE = { 主理人: 'primary', 嘉宾: 'ai', 管理员: 'neutral', 学员: 'neutral' }
 
 /**
  * 圈子信息流板块（张湧的小密圈 · 环球青藤）——
- * 三页共用：日度简报（市场动态分析）/ 周度分析（本周聚合）/ 月度思路（市场分析直播）。
- * scope: 'all' 全部 | 'week' 仅本周 | 'month' 仅本月
+ * 三页共用：日度简报（近三个交易日）/ 周度分析（本周聚合）/ 月度思路（市场分析直播）。
+ * scope: 'all' 全部 | 'week' 本周 | 'month' 本月 | 'trade3' 最近三个交易日
  */
-export default function CircleFeedSection({ title, subtitle, tagId, rows = 8, scope = 'all', emptyHint }) {
+export default function CircleFeedSection({ title, subtitle, tagId, rows = 8, scope = 'all', emptyHint, showTrend = false }) {
   const { items, loading, error, reload } = useCircleArticles(tagId, rows)
   const [expanded, setExpanded] = useState({})
 
-  // 按周期过滤（周：本周一至今；月：本月）
+  // 按周期过滤：超出时间范围的属于无效数据，不展示、不分析
   const filtered = items.filter((it) => {
     if (!it.ts) return true
     const d = new Date(it.ts)
     const now = new Date()
+    if (scope === 'trade3') {
+      return d >= tradeDaysBack(3)
+    }
     if (scope === 'week') {
       const day = now.getDay()
       const mon = new Date(now); mon.setHours(0, 0, 0, 0); mon.setDate(now.getDate() - ((day + 6) % 7))
@@ -62,6 +65,34 @@ export default function CircleFeedSection({ title, subtitle, tagId, rows = 8, sc
       </Box>
 
       <Box sx={{ p: 2, pt: 1.5 }}>
+        {/* 市场资产动态趋势快读（基于当前时间范围内的帖子做本地规则分析） */}
+        {showTrend && !error && (() => {
+          const trend = analyzeTrend(filtered)
+          if (!trend) return null
+          const Item = ({ label, value }) => !value ? null : (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'baseline' }}>
+              <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: tokens.ink500, flexShrink: 0 }}>{label}</Typography>
+              <Typography sx={{ fontSize: 12.5, color: tokens.ink700, lineHeight: 1.6 }}>{value}</Typography>
+            </Box>
+          )
+          return (
+            <Box sx={{ mb: 1.5, p: 1.5, borderRadius: tokens.radius.sm, bgcolor: tokens.aiSoft, border: `1px solid ${tokens.ai}` }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+                <Box sx={{ bgcolor: tokens.ai, color: '#fff', borderRadius: 1, px: 0.75, fontSize: 11, fontWeight: 700 }}>趋势</Box>
+                <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: tokens.ink900 }}>市场资产动态趋势快读</Typography>
+                <Typography sx={{ fontSize: 11, color: tokens.ink400, ml: 'auto' }}>依据近三个交易日 {trend.sources} 条圈子分析 · 仅供参考，裁决权在人</Typography>
+              </Box>
+              <Stack spacing={0.5}>
+                <Item label="指数" value={trend.index} />
+                <Item label="量能" value={trend.volume} />
+                <Item label="活跃方向" value={trend.industries.length ? trend.industries.join(' / ') : ''} />
+                <Item label="风险提示" value={trend.risk} />
+                <Item label="应对参考" value={trend.action} />
+              </Stack>
+            </Box>
+          )
+        })()}
+
         {error === 'MISSING_TOKEN' ? (
           <Alert severity="info" sx={{ fontSize: 12.5 }}>
             尚未配置圈子凭证：请到「设置」页粘贴环球青藤 <b>edu24ol_token</b>（登录圈子后在浏览器开发者工具 Network 面板任意请求的参数中复制）。凭证仅存本机。
