@@ -1,7 +1,7 @@
 {
   "name": "cognitive_investment_workbench",
   "private": true,
-  "version": "2.10.1",
+  "version": "2.11.0",
   "type": "module",
   "description": "人机协同认知成长型个人投资工作台 · 纯网页版（前端直连 DeepSeek + GitHub 数据层，免后端，打开即用）",
   "scripts": {
@@ -22,6 +22,7 @@
     "date-fns": "^2.30.0",
     "lucide-react": "^0.294.0",
     "nanoid": "^5.0.0",
+    "pdfjs-dist": "^6.3.289",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
@@ -6,11 +7,13 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import AutoGraph from '@mui/icons-material/AutoGraph'
+import Schedule from '@mui/icons-material/ScheduleOutlined'
 
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
 import StatusPill from '../components/StatusPill'
 import CircleFeedSection from '../components/CircleFeedSection'
+import AssetTargetAdvice from '../components/AssetTargetAdvice'
 import { CIRCLE } from '../lib/circleFeed'
 import { useStore } from '../store/useStore'
 import { deriveHoldings } from '../utils/dashboard'
@@ -28,6 +31,20 @@ export default function DailyBrief() {
   const phase = useStore((s) => s.dashboard?.marketClock?.phase) || '—'
   const targetStates = useStore((s) => s.targetStates) || []
   const remove = useStore((s) => s.remove)
+
+  // 18:00 自动提取存档（scripts/circle-daily.mjs 由 Windows 计划任务每天 18:00 运行，写入 public/circle-daily.json）
+  const [archive, setArchive] = useState(null)
+  useEffect(() => {
+    let alive = true
+    fetch('/circle-daily.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (alive && j && j.date) setArchive(j) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+  const todayIso = new Date().toISOString().slice(0, 10)
+  const todayLocal = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
+  const archivedToday = archive && (archive.date === todayLocal || archive.date === todayIso)
 
   const generate = () => {
     const { holdings } = deriveHoldings(trades, targets, {})
@@ -56,9 +73,12 @@ export default function DailyBrief() {
       />
 
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Box sx={{ p: 2, borderRadius: tokens.radius.md, bgcolor: tokens.aiSoft, border: `1px solid ${tokens.border}` }}>
-          <Typography sx={{ fontSize: 12.5, color: tokens.ink700, lineHeight: 1.6 }}>
-            自动调度（每个交易日收盘后）待接入无头脚本后启用；当前可手动生成一份基于现有持仓/宏观/触发状态的简报快照。
+        <Box sx={{ p: 2, borderRadius: tokens.radius.md, bgcolor: archivedToday ? tokens.aiSoft : tokens.warnSoft, border: `1px solid ${tokens.border}`, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Schedule sx={{ fontSize: 17, color: archivedToday ? tokens.ai : tokens.warn }} />
+          <Typography sx={{ fontSize: 12.5, color: tokens.ink700 }}>
+            {archivedToday
+              ? `今日市场动态已自动提取存档（${archive.count} 条，来源：张湧的小密圈 · 每天 18:00 计划任务）`
+              : '今日暂无自动存档（Windows 计划任务 CIW_CircleDaily_1800 每天 18:00 自动提取当天市场动态）'}
           </Typography>
         </Box>
 
@@ -111,6 +131,8 @@ export default function DailyBrief() {
             </Card>
           ))
         )}
+
+        <AssetTargetAdvice />
       </Box>
     </Box>
   )

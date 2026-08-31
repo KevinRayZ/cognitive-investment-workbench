@@ -5,7 +5,10 @@ import Stack from '@mui/material/Stack'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
+import TextField from '@mui/material/TextField'
 import AutoGraph from '@mui/icons-material/AutoGraph'
+import Notes from '@mui/icons-material/PostAddOutlined'
+import { useState } from 'react'
 
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
@@ -17,13 +20,41 @@ import { useStore } from '../store/useStore'
 /**
  * 月度操作思路（应用逻辑完善 §3.4 C4 + §3.3 C3）——
  * L4 草稿：有 L3 → 自动派生草稿；无 L3 → 进入待定态，仅输出 L2 月度快照 + 待办提示。
- * 观测点与触发条件反向喂给日度监控（§3.6 C6）。
+ * 信息源：用户每月以文字方式发送月度市场投资策略 → 粘贴导入；观测点与触发条件反向喂给日度监控（§3.6 C6）。
  */
 export default function MonthlyBrief() {
   const monthlyBriefs = useStore((s) => s.monthlyBriefs) || []
   const strategies = useStore((s) => s.strategies) || []
   const create = useStore((s) => s.create)
   const phase = useStore((s) => s.dashboard?.marketClock?.phase) || '—'
+  const [importText, setImportText] = useState('')
+
+  // 从策略文字中简单提取大类方向句（权益/债券/黄金/现金 × 超配/标配/低配等）
+  const extractDirections = (text) =>
+    (text || '').split(/[\n。；]/).map((s) => s.trim()).filter((s) => /(权益|股票|债券|黄金|现金|红利|成長|成长).{0,16}(超配|标配|低配|增持|减持|减仓|加仓|持有|观望)/.test(s)).slice(0, 8)
+
+  const importMonthly = () => {
+    const text = importText.trim()
+    if (!text) return
+    const month = new Date().toISOString().slice(0, 7)
+    const dirs = extractDirections(text)
+    create('monthlyBriefs', {
+      month,
+      observationPoints: dirs.length ? dirs : ['人工录入策略，未识别出结构化方向句'],
+      triggers: [],
+      plan: {
+        assetClass: dirs,
+        industry: [],
+        targets: [],
+        cadence: '来源：人工录入月度策略文字',
+        riskPlan: '',
+      },
+      status: '人工录入',
+      sourceText: text,
+      updatedAt: new Date().toISOString(),
+    })
+    setImportText('')
+  }
 
   const generate = () => {
     const month = new Date().toISOString().slice(0, 7)
@@ -75,6 +106,28 @@ export default function MonthlyBrief() {
       />
 
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Card sx={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius.md }}>
+          <CardContent sx={{ p: 2.25, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Notes sx={{ fontSize: 17, color: tokens.primary }} />
+              <Typography sx={{ fontSize: 14, fontWeight: 700, color: tokens.ink900 }}>导入本月市场投资策略（文字）</Typography>
+              <Typography sx={{ fontSize: 11.5, color: tokens.ink400, ml: 'auto' }}>识别大类方向句（如"权益 超配至70%"）作为本月观测点</Typography>
+            </Box>
+            <TextField
+              fullWidth
+              multiline
+              minRows={4}
+              placeholder="把你当月的月度市场投资策略粘贴到这里……"
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5, fontSize: 13 } }}
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="contained" disabled={!importText.trim()} onClick={importMonthly} sx={{ bgcolor: tokens.primary }}>导入为本月策略</Button>
+            </Box>
+          </CardContent>
+        </Card>
+
         <Box sx={{ p: 2, borderRadius: tokens.radius.md, bgcolor: strategies.length ? tokens.aiSoft : tokens.warnSoft, border: `1px solid ${tokens.border}` }}>
           <Typography sx={{ fontSize: 12.5, color: tokens.ink700, lineHeight: 1.6 }}>
             {strategies.length
@@ -103,7 +156,15 @@ export default function MonthlyBrief() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                   <StatusPill label={`L4 · ${mb.month}`} tone="warn" />
                   <Chip size="small" label={mb.status} color="warning" variant="outlined" />
+                  {mb.sourceText && <Chip size="small" label="含策略原文" variant="outlined" />}
                 </Box>
+
+                {mb.sourceText && (
+                  <Box sx={{ p: 1.25, borderRadius: 1, bgcolor: tokens.aiSoft, border: `1px solid ${tokens.border}` }}>
+                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: tokens.ink500, mb: 0.5 }}>策略原文</Typography>
+                    <Typography sx={{ fontSize: 12.5, color: tokens.ink700, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{mb.sourceText}</Typography>
+                  </Box>
+                )}
 
                 <Box>
                   <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: tokens.ink500, mb: 0.5 }}>本月观测点（反向喂日度监控）</Typography>

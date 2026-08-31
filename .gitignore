@@ -31,6 +31,9 @@ Thumbs.db
 .env.*.local
 server/.env
 
+# 圈子数据源凭证（环球青藤 edu24ol_token，仅本机）
+.circle-token
+
 # Workbuddy private memory logs (per-session append-only)
 .workbuddy/memory/2026-*.md
 .workbuddy/memory/YYYY-MM-DD.md

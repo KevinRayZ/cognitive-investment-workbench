@@ -1,3 +1,5 @@
+import { useState, useRef } from 'react'
+import * as pdfjsLib from 'pdfjs-dist'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
@@ -7,6 +9,8 @@ import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import AutoGraph from '@mui/icons-material/AutoGraph'
 import CheckCircle from '@mui/icons-material/CheckCircleOutline'
+import UploadFile from '@mui/icons-material/UploadFileOutlined'
+import PictureAsPdf from '@mui/icons-material/PictureAsPdfOutlined'
 
 import tokens from '../theme/tokens'
 import PageHeader from '../layout/PageHeader'
@@ -15,6 +19,17 @@ import CircleFeedSection from '../components/CircleFeedSection'
 import { CIRCLE } from '../lib/circleFeed'
 import { useStore } from '../store/useStore'
 import { deriveHoldings, checkHealth } from '../utils/dashboard'
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href
+
+/** 本周一起止（ISO 日期）。 */
+function weekRange() {
+  const now = new Date()
+  const day = now.getDay()
+  const ws = new Date(now); ws.setHours(0, 0, 0, 0); ws.setDate(now.getDate() - ((day + 6) % 7))
+  const we = new Date(ws); we.setDate(ws.getDate() + 6)
+  return { weekStart: ws.toISOString().slice(0, 10), weekEnd: we.toISOString().slice(0, 10) }
+}
 
 /**
  * 周度投资分析（应用逻辑完善 §3.4 C4 后半）——
@@ -27,6 +42,45 @@ export default function WeeklyReport() {
   const targets = useStore((s) => s.targets) || []
   const trades = useStore((s) => s.trades) || []
   const industryWatches = useStore((s) => s.industryWatches) || []
+  const fileRef = useRef(null)
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfError, setPdfError] = useState('')
+  const [expanded, setExpanded] = useState({})
+
+  // PDF → 全文提取 → 存为本周分析记录（人工录入，status=人工录入 便于区分自动生成）
+  const onPdfFile = async (file) => {
+    if (!file) return
+    setPdfBusy(true)
+    setPdfError('')
+    try {
+      const buf = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise
+      let text = ''
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i)
+        const content = await page.getTextContent()
+        text += content.items.map((it) => it.str).join(' ').replace(/ +/g, ' ') + '\n'
+      }
+      const { weekStart, weekEnd } = weekRange()
+      create('weeklyReports', {
+        weekStart,
+        weekEnd,
+        sourceType: 'pdf',
+        fileName: file.name,
+        sourceText: text.trim(),
+        industryTrends: [],
+        holdingHealth: [],
+        l7Audit: { violations: [], riskLevel: '低' },
+        actionItems: ['本周分析来自人工上传 PDF，请结合行业趋势与持仓健康人工研判'],
+        updatedAt: new Date().toISOString(),
+      })
+    } catch (e) {
+      setPdfError(`PDF 解析失败：${e.message || e}（扫描版/图片型 PDF 无法提取文字）`)
+    } finally {
+      setPdfBusy(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
 
   const generate = () => {
     const { holdings } = deriveHoldings(trades, targets, {})
@@ -61,6 +115,21 @@ export default function WeeklyReport() {
       />
 
       <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Card sx={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius.md }}>
+          <CardContent sx={{ p: 2.25, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+            <UploadFile sx={{ fontSize: 18, color: tokens.primary }} />
+            <Box sx={{ flex: 1, minWidth: 220 }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 700, color: tokens.ink900 }}>上传每周投资分析（PDF）</Typography>
+              <Typography sx={{ fontSize: 11.5, color: tokens.ink400 }}>自动提取全文作为本周分析依据，与圈子周度聚合并列展示</Typography>
+            </Box>
+            {pdfError && <Typography sx={{ fontSize: 12, color: tokens.warn }}>{pdfError}</Typography>}
+            <Button variant="contained" startIcon={<PictureAsPdf />} disabled={pdfBusy} onClick={() => fileRef.current?.click()} sx={{ bgcolor: tokens.primary }}>
+              {pdfBusy ? '解析中…' : '选择 PDF'}
+            </Button>
+            <input ref={fileRef} type="file" accept="application/pdf" hidden onChange={(e) => onPdfFile(e.target.files?.[0])} />
+          </CardContent>
+        </Card>
+
         <CircleFeedSection
           title="本周市场分析聚合"
           subtitle="张湧的小密圈 · 市场动态分析（本周一至今自动过滤）"
@@ -81,7 +150,22 @@ export default function WeeklyReport() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                   <StatusPill label={`${r.weekStart} ~ ${r.weekEnd}`} tone="ai" />
                   <Chip size="small" label={`L7 风险：${r.l7Audit?.riskLevel || '低'}`} color={r.l7Audit?.riskLevel === '低' ? 'success' : 'warning'} variant="outlined" />
+                  {r.sourceType === 'pdf' && <Chip size="small" icon={<PictureAsPdf />} label={r.fileName || 'PDF'} variant="outlined" />}
                 </Box>
+
+                {r.sourceText && (
+                  <Box sx={{ p: 1.25, borderRadius: 1, bgcolor: tokens.aiSoft, border: `1px solid ${tokens.border}` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: tokens.ink500 }}>分析全文（PDF 提取）</Typography>
+                      <Button size="small" onClick={() => setExpanded((s) => ({ ...s, [r.id]: !s[r.id] }))} sx={{ minWidth: 0, fontSize: 11.5 }}>
+                        {expanded[r.id] ? '收起' : '展开全文'}
+                      </Button>
+                    </Box>
+                    <Typography sx={{ fontSize: 12.5, color: tokens.ink700, lineHeight: 1.7, whiteSpace: expanded[r.id] ? 'pre-wrap' : 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {r.sourceText}
+                    </Typography>
+                  </Box>
+                )}
 
                 <Box>
                   <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: tokens.ink500, mb: 0.5 }}>行业趋势状态</Typography>
