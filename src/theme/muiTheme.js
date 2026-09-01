@@ -44,8 +44,9 @@ export const muiTheme = createTheme({
         body: {
           backgroundColor: tokens.bgPage,
           color: tokens.ink700,
-          '-webkit-font-smoothing': 'antialiased',
-          '-moz-osx-font-smoothing': 'grayscale',
+          // MUI 5 主题对象不支持 kebab-case，必须用驼峰，否则告警且样式不生效
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
         },
         '*::-webkit-scrollbar': { width: 6, height: 6 },
         '*::-webkit-scrollbar-track': { background: 'transparent' },

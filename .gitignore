@@ -6,10 +6,17 @@ node_modules/
 # Build
 dist/
 build/
+dist-verify/
 .vite/
 *.local
 # Vite dev 运行时临时配置（带绝对路径，不入仓）
 vite.config.js.timestamp-*.mjs
+
+# 每日自动生成的圈子存档（scripts/circle-daily.mjs 每天 18:00 写入，非源码）
+public/circle-daily.json
+
+# 页面冒烟检查的临时浏览器 profile（scripts/smoke-pages.mjs）
+.smoke-profile/
 
 # Logs
 npm-debug.log*

@@ -109,10 +109,37 @@ function migrateV11(persisted) {
   return merged
 }
 
+/**
+ * v12 起的新基线：只补齐缺失的键，绝不用种子数据覆盖用户记录。
+ *
+ * v8~v11 的「种子整体覆盖」是修正历史脏数据（currentPrice 残留、标的英文简称等）的
+ * 一次性操作，均已生效。若后续迁移继续挂在那条链上，每次升版本都会吞掉用户
+ * 手工录入的持仓与交易 —— 而本工作台是纯前端应用，误覆盖无法从服务端找回。
+ */
+function baseMigrate(persisted) {
+  const fresh = seedData()
+  const merged = {}
+  for (const key of Object.keys(fresh)) {
+    const oldVal = persisted?.[key]
+    if (Array.isArray(fresh[key])) {
+      merged[key] = Array.isArray(oldVal) ? oldVal : fresh[key]
+    } else {
+      merged[key] = oldVal ?? fresh[key]
+    }
+  }
+  // dashboard 为对象：以用户编辑为准，缺失项用种子兜底
+  merged.dashboard = { ...(fresh.dashboard || {}), ...(persisted?.dashboard || {}) }
+  merged.liveShares = persisted?.liveShares || {}
+  return merged
+}
+
 // v11 → v12：新增资产观点/标的动态方向/日周月报告等空实体集合（应用逻辑完善·改造蓝图 §4）。
 // 已存在则保留用户数据，不存在则用最新种子中的空数组补齐。
-function migrateV12(persisted) {
-  const merged = migrateV11(persisted)
+//
+// version 分支：老数据（<12）仍走历史覆盖链修脏数据；已达 v12 的数据走保留基线，
+// 保证 v12 → v13 及以后的升级不再覆盖用户记录。
+function migrateV12(persisted, version) {
+  const merged = version >= 12 ? baseMigrate(persisted) : migrateV11(persisted)
   const fresh = seedData()
   for (const key of ['assetViews', 'targetStates', 'dailyBriefs', 'weeklyReports', 'monthlyBriefs']) {
     if (!Array.isArray(merged[key])) merged[key] = fresh[key] || []
@@ -210,13 +237,30 @@ export const useStore = create(
         set(patch)
       },
 
-      /** 在线化：用云端数据初始化本地 store（云端非空优先，空集合保留本地示例）。 */
+      /**
+       * 在线化：用云端数据初始化本地 store。
+       *
+       * 采用「按 id 合并」而非「云端整体覆盖」：
+       *  - 本地独有记录保留（例如 seed 新增的策略方法、本机新写的日度简报）
+       *  - 云端独有记录并入（其他设备产生的数据）
+       *  - 同 id 冲突时以云端为准（云端即各设备写入后的聚合结果）
+       * 若改成整体覆盖，一旦 seed 升级，云端旧快照会反向压掉本地新种子。
+       */
       hydrateFromServer: (data) => {
         if (!data) return
         const patch = {}
         for (const entity of Object.keys(ENTITY_META)) {
-          const cloud = Array.isArray(data[entity]) ? data[entity] : null
-          if (cloud && cloud.length) patch[entity] = cloud
+          const cloud = data[entity]
+          if (!Array.isArray(cloud) || !cloud.length) continue
+          const local = get()[entity]
+          if (!Array.isArray(local) || !local.length) {
+            patch[entity] = cloud
+            continue
+          }
+          const cloudIds = new Set(cloud.map((it) => it && it.id))
+          // 本地独有（云端没有的 id）在前，云端全部在后 → 同 id 以云端为准
+          const localOnly = local.filter((it) => it && it.id && !cloudIds.has(it.id))
+          patch[entity] = [...localOnly, ...cloud]
         }
         // 看板状态（单一对象，非数组集合）
         if (data.dashboard && typeof data.dashboard === 'object') {

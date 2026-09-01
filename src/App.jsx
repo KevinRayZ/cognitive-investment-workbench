@@ -6,12 +6,9 @@ import TopBar from './layout/TopBar'
 import Sidebar from './layout/Sidebar'
 // 底部「人类最终负责」声明条已按用户要求移除（规则本身仍保留在《总纲》原则中）
 import { useStore } from './store/useStore'
-import { pullAll, pushEntity } from './lib/sync'
+import { pullAll, pushEntity, SYNC_COLLECTIONS } from './lib/sync'
 import { getGithubToken } from './lib/credentials'
 import tokens from './theme/tokens'
-
-// 本地 store 实体 → 云端集合 映射（仅这些实体参与在线同步）
-const SYNC_MAP = { trades: 'trades', reviews: 'reviews', dashboard: 'dashboard' }
 
 /**
  * 应用壳层：TopBar(56) → [Sidebar | (Main 滚动区 + 免责声明条 52)]。
@@ -25,7 +22,6 @@ export default function App() {
 
   useEffect(() => {
     let alive = true
-    let timer = null
 
     // 1) 启动：拉取云端数据 → 初始化 store（云端数据优先，空数组保留本地示例）
     ;(async () => {
@@ -45,24 +41,30 @@ export default function App() {
       }
     })()
 
-    // 2) 订阅 store 变化：trades/reviews 变更 → 防抖 1.5s 推送云端
+    // 2) 订阅 store 变化：任一同步实体变更 → 防抖 1.5s 推送云端。
+    //    每个实体独立计时：共用 timer 时，同一次操作改动多个实体只会推最后一个。
+    const timers = new Map()
     const unsub = useStore.subscribe((state, prev) => {
       if (!getGithubToken()) return
-      for (const entity of Object.keys(SYNC_MAP)) {
-        if (state[entity] !== prev[entity]) {
-          clearTimeout(timer)
-          timer = setTimeout(() => {
+      for (const entity of Object.keys(SYNC_COLLECTIONS)) {
+        if (state[entity] === prev[entity]) continue
+        if (timers.has(entity)) clearTimeout(timers.get(entity))
+        timers.set(
+          entity,
+          setTimeout(() => {
+            timers.delete(entity)
             pushEntity(entity, state[entity]).then((ok) => {
               if (!ok) console.warn('[App] 推送失败', entity)
             })
           }, 1500)
-        }
+        )
       }
     })
 
     return () => {
       alive = false
-      clearTimeout(timer)
+      timers.forEach((t) => clearTimeout(t))
+      timers.clear()
       unsub()
     }
   }, [hydrateFromServer])

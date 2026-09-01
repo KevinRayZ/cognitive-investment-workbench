@@ -61,6 +61,10 @@ export default function TargetL3() {
 
   const target = code ? targets.find((t) => t.code === code) : null
 
+  // 注意：列表视图（提前 return）也会用到 openNew，必须声明在 return 之前，
+  // 否则命中 TDZ（Cannot access 'openNew' before initialization）导致整页崩溃。
+  const openNew = () => { setForm({ ...EMPTY }); setOpen(true) }
+
   // 无 code 或无匹配 → 列表视图
   if (!code || !target) {
     return (
@@ -103,7 +107,6 @@ export default function TargetL3() {
     })
   }
 
-  const openNew = () => { setForm({ ...EMPTY }); setOpen(true) }
   const openEdit = () => { setForm({ ...target }); setOpen(true) }
   const save = () => {
     if (form.id) update('targets', form.id, form)

@@ -30,7 +30,8 @@ import tokens from '../theme/tokens'
 const LAYERS = [
   { idx: '①', label: '投资哲学', path: '/principle?view=l1', icon: BookOpen },
   { idx: '②', label: '策略方法', path: '/methods', icon: Layers },
-  { idx: '③', label: '标的研究', path: '/research/02097.HK', icon: Search },
+  // 指向列表页而非硬编码某只标的代码：代码变更/清空后会落到空白详情
+  { idx: '③', label: '标的研究', path: '/research', icon: Search },
   { idx: '④', label: '交易决策', path: '/trade', icon: ReceiptLong },
   { idx: '⑤', label: '复盘错误', path: '/review', icon: ErrorOutline },
   { idx: '⑥', label: '观察灵感', path: '/inspiration', icon: Lightbulb },
