@@ -578,7 +578,7 @@ export function seedData() {
     createTarget({
       id: 'T-DW',
       name: '电网ETF',
-      code: '',
+      code: '561380',
       currency: 'CNY',
       businessModel: '跟踪电网上中游产业链的 ETF（电网建设/设备/特高压），受益于电力基建投资与新能源并网。',
       moat: '特高压与电力设备招标景气，电网投资确定性高。',
@@ -1045,7 +1045,7 @@ export function seedData() {
       isSample: false,
     }),
     createFund({
-      code: '',
+      code: '561380',
       name: '电网ETF（关注）',
       fundType: '行业主题',
       investmentStyle: '均衡',
